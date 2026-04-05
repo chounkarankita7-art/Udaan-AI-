@@ -184,6 +184,70 @@ export default function Dashboard() {
         ))}
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "1.5rem" }}>
+        {[
+          {
+            title: "Mock Test",
+            desc: "Test your knowledge with timed MCQs across Python, JS, ML, DSA & Web Dev",
+            path: "/mock-test",
+            gradient: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+            glow: "rgba(124,58,237,0.4)",
+            badge: "10 Questions · Timed",
+            icon: "✦",
+          },
+          {
+            title: "Mock Interview",
+            desc: "Simulate real technical interviews for Frontend, Backend, ML, Full Stack & Data Science roles",
+            path: "/mock-interview",
+            gradient: "linear-gradient(135deg, #0891b2 0%, #7c3aed 100%)",
+            glow: "rgba(8,145,178,0.4)",
+            badge: "5 Questions · Role-based",
+            icon: "◈",
+          },
+        ].map(item => (
+          <div
+            key={item.title}
+            data-testid={`card-${item.title.toLowerCase().replace(" ", "-")}`}
+            onClick={() => setLocation(item.path)}
+            style={{
+              background: "rgba(13,10,40,0.85)",
+              border: "1px solid rgba(124,58,237,0.2)",
+              borderRadius: "18px",
+              padding: "1.5rem",
+              cursor: "pointer",
+              transition: "all 0.25s ease",
+              position: "relative",
+              overflow: "hidden",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-3px)";
+              e.currentTarget.style.boxShadow = `0 8px 30px ${item.glow}`;
+              e.currentTarget.style.borderColor = "rgba(124,58,237,0.5)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.borderColor = "rgba(124,58,237,0.2)";
+            }}
+          >
+            <div style={{ position: "absolute", top: 0, right: 0, width: "120px", height: "120px", background: item.gradient, opacity: 0.08, borderRadius: "0 18px 0 100%", pointerEvents: "none" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.875rem" }}>
+              <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: item.gradient, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "1.25rem" }}>
+                {item.icon}
+              </div>
+              <span style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", padding: "0.2rem 0.625rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 600 }}>
+                {item.badge}
+              </span>
+            </div>
+            <h3 style={{ color: "white", fontWeight: 800, fontSize: "1.1rem", marginBottom: "0.4rem" }}>{item.title}</h3>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: "1rem" }}>{item.desc}</p>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.4rem 0.875rem", background: item.gradient, borderRadius: "8px", color: "white", fontWeight: 700, fontSize: "0.8rem", boxShadow: `0 0 12px ${item.glow}` }}>
+              Start Now →
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div
         style={{
           display: "grid",

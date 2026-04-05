@@ -7,6 +7,8 @@ const navItems = [
   { label: "My Roadmap", path: "/roadmap", icon: "R" },
   { label: "Courses", path: "/courses", icon: "C" },
   { label: "Library", path: "/library", icon: "L" },
+  { label: "Mock Test", path: "/mock-test", icon: "T" },
+  { label: "Mock Interview", path: "/mock-interview", icon: "I" },
   { label: "Progress", path: "/progress", icon: "P" },
   { label: "Certificates", path: "/certificates", icon: "C" },
 ];

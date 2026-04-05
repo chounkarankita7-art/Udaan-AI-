@@ -69,6 +69,16 @@ function Router() {
           <AppLayout />
         </AuthGuard>
       </Route>
+      <Route path="/mock-test">
+        <AuthGuard>
+          <AppLayout />
+        </AuthGuard>
+      </Route>
+      <Route path="/mock-interview">
+        <AuthGuard>
+          <AppLayout />
+        </AuthGuard>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
