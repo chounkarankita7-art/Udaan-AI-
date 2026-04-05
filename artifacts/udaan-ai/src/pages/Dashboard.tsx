@@ -204,6 +204,15 @@ export default function Dashboard() {
             badge: "5 Questions · Role-based",
             icon: "◈",
           },
+          {
+            title: "Resume Builder",
+            desc: "Auto-generates your resume from courses, certificates & skills earned on the platform",
+            path: "/resume",
+            gradient: "linear-gradient(135deg, #059669 0%, #0891b2 100%)",
+            glow: "rgba(5,150,105,0.4)",
+            badge: "Auto-updated · Printable",
+            icon: "✎",
+          },
         ].map(item => (
           <div
             key={item.title}

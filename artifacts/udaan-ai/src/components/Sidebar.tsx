@@ -9,6 +9,7 @@ const navItems = [
   { label: "Library", path: "/library", icon: "L" },
   { label: "Mock Test", path: "/mock-test", icon: "T" },
   { label: "Mock Interview", path: "/mock-interview", icon: "I" },
+  { label: "Resume Builder", path: "/resume", icon: "R" },
   { label: "Progress", path: "/progress", icon: "P" },
   { label: "Certificates", path: "/certificates", icon: "C" },
 ];

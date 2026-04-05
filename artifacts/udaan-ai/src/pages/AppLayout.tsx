@@ -12,6 +12,7 @@ import Certificates from "./Certificates";
 import Library from "./Library";
 import MockTest from "./MockTest";
 import MockInterview from "./MockInterview";
+import ResumeBuilder from "./ResumeBuilder";
 
 export default function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false);
@@ -48,6 +49,7 @@ export default function AppLayout() {
             <Route path="/library" component={Library} />
             <Route path="/mock-test" component={MockTest} />
             <Route path="/mock-interview" component={MockInterview} />
+            <Route path="/resume" component={ResumeBuilder} />
           </Switch>
         </main>
       </div>

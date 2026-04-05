@@ -79,6 +79,11 @@ function Router() {
           <AppLayout />
         </AuthGuard>
       </Route>
+      <Route path="/resume">
+        <AuthGuard>
+          <AppLayout />
+        </AuthGuard>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
