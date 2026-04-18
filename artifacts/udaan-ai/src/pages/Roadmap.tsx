@@ -4,6 +4,7 @@ import {
 } from "@workspace/api-client-react";
 import { getStoredStudent } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { getConfirmedRoadmapProfile } from "@/lib/assessment-draft";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -22,6 +23,7 @@ const mockProgressData = [
 export default function Roadmap() {
   const [, setLocation] = useLocation();
   const student = getStoredStudent();
+  const confirmedProfile = getConfirmedRoadmapProfile();
 
   const { data: roadmap, isLoading, error } = useGetRoadmap(student?.id || "", {
     query: {
@@ -29,6 +31,28 @@ export default function Roadmap() {
       queryKey: getGetRoadmapQueryKey(student?.id || ""),
     },
   });
+
+  // Get all skills from assessment (interests + extraSkills)
+  const assessmentSkills = confirmedProfile 
+    ? Array.from(new Set([...(confirmedProfile.interests || []), ...(confirmedProfile.extraSkills || [])]))
+    : [];
+
+  const skillIconMap: Record<string, string> = {
+    "Web Development": "🌐",
+    "App Development": "📱",
+    "Data Science": "📊",
+    "AI/ML": "🤖",
+    "Cybersecurity": "🛡️",
+    "Design": "🎨",
+    "Soft Skills": "💬",
+    "Python": "🐍",
+    "JavaScript": "⚡",
+    "React": "⚛️",
+    "Excel": "📗",
+    "SQL": "🗃️",
+    "Cloud": "☁️",
+    "DevOps": "🔧",
+  };
 
   if (!student) {
     setLocation("/signup");
@@ -148,6 +172,88 @@ export default function Roadmap() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {assessmentSkills.length > 0 && (
+        <div style={{ ...cardStyle, marginBottom: "2rem" }}>
+          <h3 style={{ color: "white", fontWeight: 600, marginBottom: "0.5rem", fontSize: "1rem" }}>
+            Your Learning Skills Flow
+          </h3>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+            Skills selected during your assessment, ordered for optimal learning progression
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            {assessmentSkills.map((skill, index) => (
+              <div key={skill} style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                  <div
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontWeight: 800,
+                      fontSize: "1.3rem",
+                      boxShadow: "0 0 15px rgba(124,58,237,0.4)",
+                    }}
+                  >
+                    {skillIconMap[skill] || "✨"}
+                  </div>
+                  {index < assessmentSkills.length - 1 && (
+                    <div
+                      style={{
+                        width: "2px",
+                        minHeight: "40px",
+                        background: "linear-gradient(to bottom, #7c3aed, rgba(124,58,237,0.2))",
+                        marginTop: "0.5rem",
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    flex: 1,
+                    background: "rgba(124,58,237,0.08)",
+                    border: "1px solid rgba(124,58,237,0.25)",
+                    borderRadius: "12px",
+                    padding: "1rem",
+                    marginBottom: index < assessmentSkills.length - 1 ? "1rem" : 0,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+                    <h4 style={{ color: "white", fontWeight: 700, fontSize: "1rem", margin: 0 }}>
+                      {skill}
+                    </h4>
+                    <span
+                      style={{
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        color: "#a78bfa",
+                        background: "rgba(124,58,237,0.15)",
+                        border: "1px solid rgba(124,58,237,0.3)",
+                        borderRadius: "20px",
+                        padding: "0.2rem 0.6rem",
+                      }}
+                    >
+                      Step {index + 1}
+                    </span>
+                  </div>
+                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.8rem", margin: 0 }}>
+                    {index === 0 && "Foundation skill - Start here"}
+                    {index === assessmentSkills.length - 1 && index > 0 && "Advanced skill - Build upon previous skills"}
+                    {index > 0 && index < assessmentSkills.length - 1 && "Intermediate skill - Progress from foundations"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ position: "relative" }}>
         {(roadmap.phases as any[] || []).map((phase: any, idx: number) => (

@@ -1,202 +1,356 @@
-import { useMemo, useState } from "react";
-import { useLocation, useParams } from "wouter";
-import {
-  getSkillsFromRoadmap,
-  getSkillProgress,
-  isLevelUnlocked,
-  isPhaseContentDone,
-  isPhaseMockPassed,
-  isPhaseUnlocked,
-  markPhaseContentComplete,
-} from "@/lib/skills-progress";
+import { useState } from "react";
+import { useParams } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { StarField } from "@/components/StarField";
+import logoPath from "/logo.png";
 
-function ConfettiBurst() {
-  const pieces = new Array(24).fill(null);
-  return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 40 }}>
-      {pieces.map((_, i) => {
-        const left = 10 + (i * 3.5) % 80;
-        const delay = (i % 8) * 40;
-        const color = ["#c084fc", "#4c35c8", "#f59e0b", "#34d399"][i % 4];
-        return (
-          <span
-            key={i}
-            style={{
-              position: "absolute",
-              top: "-10px",
-              left: `${left}%`,
-              width: "8px",
-              height: "12px",
-              background: color,
-              borderRadius: "3px",
-              opacity: 0.95,
-              animation: `fall 1200ms ease-in ${delay}ms forwards`,
-            }}
-          />
-        );
-      })}
-      <style>
-        {`@keyframes fall {
-          0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(110vh) rotate(700deg); opacity: 0; }
-        }`}
-      </style>
-    </div>
-  );
+type TabType = "videos" | "study" | "practice";
+
+interface Video {
+  id: string;
+  title: string;
+  duration: string;
+  youtubeId: string;
+  watched: boolean;
 }
 
+interface PracticeExercise {
+  id: string;
+  description: string;
+  completed: boolean;
+}
+
+interface PhaseData {
+  skillName: string;
+  levelName: string;
+  phaseName: string;
+  phaseNumber: number;
+  videos: Video[];
+  studyMaterial: string;
+  exercises: PracticeExercise[];
+}
+
+// Sample data for Python - Beginner - Phase 1
+const samplePhaseData: PhaseData = {
+  skillName: "Python",
+  levelName: "Beginner",
+  phaseName: "Getting Started",
+  phaseNumber: 1,
+  videos: [
+    { id: "1", title: "Python Introduction", duration: "15:30", youtubeId: "kqtD5dpn9C8", watched: false },
+    { id: "2", title: "Variables and Data Types", duration: "12:45", youtubeId: "cQT33yu9pY8", watched: false },
+    { id: "3", title: "Control Flow", duration: "18:20", youtubeId: "Zp5MuPOtsSY", watched: false },
+  ],
+  studyMaterial: `
+# Python Basics - Phase 1
+
+## Introduction to Python
+Python is a high-level, interpreted programming language known for its simplicity and readability. It's widely used in web development, data science, automation, and more.
+
+## Variables and Data Types
+
+### Variables
+Variables are containers for storing data values.
+
+\`\`\`python
+# Variable assignment
+name = "John"
+age = 25
+is_student = True
+\`\`\`
+
+### Data Types
+Python has several built-in data types:
+
+- **String**: Text data (e.g., "Hello")
+- **Integer**: Whole numbers (e.g., 42)
+- **Float**: Decimal numbers (e.g., 3.14)
+- **Boolean**: True or False
+- **List**: Ordered collection of items
+
+\`\`\`python
+# Different data types
+name = "Python"       # String
+version = 3.11        # Float
+is_awesome = True     # Boolean
+languages = ["Python", "JavaScript", "C++"]  # List
+\`\`\`
+
+## Control Flow
+
+### If Statements
+Conditional execution of code based on conditions.
+
+\`\`\`python
+age = 18
+
+if age >= 18:
+    print("You are an adult")
+else:
+    print("You are a minor")
+\`\`\`
+
+### Loops
+- **For Loop**: Iterate over sequences
+- **While Loop**: Repeat while condition is true
+
+\`\`\`python
+# For loop
+for i in range(5):
+    print(i)  # Prints 0, 1, 2, 3, 4
+
+# While loop
+count = 0
+while count < 5:
+    print(count)
+    count += 1
+\`\`\`
+
+## Key Points to Remember
+- Python uses indentation to define code blocks
+- Variables are dynamically typed
+- Comments start with #
+- Print statements use print()
+  `,
+  exercises: [
+    { id: "1", description: "Write a Hello World program", completed: false },
+    { id: "2", description: "Create variables of different types (string, int, float, boolean)", completed: false },
+    { id: "3", description: "Write a simple if-else program to check if a number is positive or negative", completed: false },
+  ],
+};
+
 export default function PhaseContent() {
-  const [, setLocation] = useLocation();
-  const { skillId, levelId, phaseId } = useParams<{ skillId: string; levelId: "beginner" | "intermediate" | "advanced"; phaseId: string }>();
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [, bump] = useState(0);
+  const { skillId, levelId, phaseId } = useParams<{ skillId: string; levelId: string; phaseId: string }>();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<TabType>("videos");
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [phaseData, setPhaseData] = useState<PhaseData>(samplePhaseData);
+  const [phaseComplete, setPhaseComplete] = useState(false);
 
-  const skills = getSkillsFromRoadmap();
-  const skill = skills.find(s => s.id === skillId);
-  const progress = getSkillProgress();
+  const watchedCount = phaseData.videos.filter(v => v.watched).length;
+  const completedExercises = phaseData.exercises.filter(e => e.completed).length;
+  const totalProgress = Math.round(((watchedCount + completedExercises) / (phaseData.videos.length + phaseData.exercises.length)) * 100);
 
-  const levelIndex = skill?.levels.findIndex(l => l.id === levelId) ?? -1;
-  const level = levelIndex >= 0 ? skill?.levels[levelIndex] : undefined;
-  const levelUnlocked = skill && levelIndex >= 0 ? isLevelUnlocked(skill.levels, levelIndex, skill.id, progress) : false;
-  const phaseIndex = level?.phases.findIndex(p => p.id === phaseId) ?? -1;
-  const phase = phaseIndex >= 0 ? level?.phases[phaseIndex] : undefined;
-  const phaseUnlocked = level && phaseIndex >= 0 ? isPhaseUnlocked(level.phases, phaseIndex, progress) : false;
-
-  const contentDone = Boolean(phase && isPhaseContentDone(phase.id, progress));
-  const mockPassed = Boolean(phase && isPhaseMockPassed(phase.id, progress));
-
-  const phaseToUse = phase;
-  const nextPhaseId = useMemo(() => {
-    if (!level || phaseIndex < 0) return null;
-    return level.phases[phaseIndex + 1]?.id ?? null;
-  }, [level, phaseIndex]);
-
-  if (!skill || !level || !phase || !levelUnlocked || !phaseUnlocked) {
-    return (
-      <div style={{ padding: "1.5rem" }}>
-        <p style={{ color: "rgba(255,255,255,0.7)" }}>Phase is locked or not found.</p>
-      </div>
-    );
+  function toggleWatched(videoId: string) {
+    setPhaseData(prev => ({
+      ...prev,
+      videos: prev.videos.map(v => v.id === videoId ? { ...v, watched: !v.watched } : v),
+    }));
+    toast({ title: "Video marked as watched" });
   }
 
-  const sk = skill;
-  const lv = level;
+  function toggleExercise(exerciseId: string) {
+    setPhaseData(prev => ({
+      ...prev,
+      exercises: prev.exercises.map(e => e.id === exerciseId ? { ...e, completed: !e.completed } : e),
+    }));
+    toast({ title: "Exercise marked as complete" });
+  }
 
-  function handleMarkContentComplete() {
-    if (contentDone || !phaseToUse) return;
-    markPhaseContentComplete(phaseToUse.id);
-    bump(n => n + 1);
-    setShowConfetti(true);
-    const sid = sk.id;
-    const lid = lv.id;
-    const pid = phaseToUse.id;
-    setTimeout(() => setShowConfetti(false), 1400);
-    setTimeout(() => setLocation(`/skills/${sid}/${lid}/${pid}/test`), 700);
+  function handlePhaseComplete() {
+    if (totalProgress < 50) {
+      toast({ title: "Please complete at least 50% of content first" });
+      return;
+    }
+    setPhaseComplete(true);
+    toast({ title: "Phase completed! Starting mock test..." });
+    // Navigate to mock test - to be implemented
   }
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: "940px", position: "relative" }}>
-      {showConfetti && <ConfettiBurst />}
-      <button
-        type="button"
-        onClick={() => setLocation(`/skills/${sk.id}/${lv.id}`)}
-        style={{
-          marginBottom: "0.8rem",
-          background: "transparent",
-          border: "1px solid rgba(76,53,200,0.4)",
-          color: "#c4b5fd",
-          borderRadius: "9px",
-          padding: "0.45rem 0.75rem",
-          cursor: "pointer",
-        }}
-      >
-        ← Back to Phases
-      </button>
+    <div style={{ minHeight: "100vh", background: "#0d0b1e", position: "relative", padding: "1.25rem" }}>
+      <StarField />
 
-      <h1 style={{ color: "white", fontWeight: 800, fontSize: "1.65rem", marginBottom: "0.35rem" }}>
-        {skill.icon} {phase.title}
-      </h1>
-      <p style={{ color: "rgba(255,255,255,0.56)", marginBottom: "1rem" }}>
-        {skill.name} · {level.title} · {phase.duration}
-      </p>
-
-      {mockPassed && (
-        <div
-          style={{
-            marginBottom: "1rem",
-            borderRadius: "12px",
-            padding: "0.65rem 0.85rem",
-            color: "#bbf7d0",
-            border: "1px solid rgba(16,185,129,0.45)",
-            background: "rgba(16,185,129,0.12)",
-          }}
-        >
-          Phase quiz passed. {nextPhaseId ? "Next phase is unlocked." : "All phases done here — take the level test if ready."}
+      <div style={{ position: "relative", zIndex: 10, maxWidth: "1000px", margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <span style={{ color: "#a78bfa", fontSize: "0.85rem" }}>{phaseData.skillName}</span>
+            <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>
+            <span style={{ color: "#a78bfa", fontSize: "0.85rem" }}>{phaseData.levelName}</span>
+            <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>
+            <span style={{ color: "#c4b5fd", fontSize: "0.85rem", fontWeight: 600 }}>Phase {phaseData.phaseNumber}</span>
+          </div>
+          <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "white", marginBottom: "0.5rem" }}>{phaseData.phaseName}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <div style={{ flex: 1, height: "8px", borderRadius: "999px", background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${totalProgress}%`, background: "linear-gradient(90deg, #4c35c8, #9333ea)", borderRadius: "999px", transition: "width 0.3s ease" }} />
+            </div>
+            <span style={{ color: "#a78bfa", fontSize: "0.85rem", fontWeight: 700 }}>{totalProgress}%</span>
+          </div>
         </div>
-      )}
 
-      <div style={{ borderRadius: "14px", border: "1px solid rgba(76,53,200,0.3)", background: "rgba(13,11,30,0.9)", padding: "0.95rem", marginBottom: "0.8rem" }}>
-        <h3 style={{ color: "white", marginTop: 0 }}>Video</h3>
-        <p style={{ color: "rgba(255,255,255,0.72)", marginBottom: 0 }}>
-          Watch concept videos on: {phase.topics.join(", ")}.
-        </p>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "1px solid rgba(76,53,200,0.2)", paddingBottom: "0.5rem" }}>
+          {[
+            { id: "videos" as TabType, label: "📹 Videos" },
+            { id: "study" as TabType, label: "📖 Study Material" },
+            { id: "practice" as TabType, label: "💻 Practice" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "0.75rem 1.5rem",
+                border: "none",
+                borderRadius: "12px",
+                background: activeTab === tab.id ? "linear-gradient(135deg, rgba(76,53,200,0.7), rgba(147,51,234,0.55))" : "transparent",
+                color: activeTab === tab.id ? "white" : "rgba(255,255,255,0.6)",
+                fontWeight: 700,
+                cursor: "pointer",
+                fontSize: "0.95rem",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div style={{ background: "rgba(13,10,40,0.85)", border: "1px solid rgba(76,53,200,0.28)", borderRadius: "18px", padding: "1.5rem", marginBottom: "2rem", minHeight: "400px" }}>
+          {activeTab === "videos" && (
+            <div>
+              {selectedVideo ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVideo(null)}
+                    style={{ padding: "0.5rem 1rem", border: "1px solid rgba(76,53,200,0.45)", borderRadius: "12px", background: "transparent", color: "white", fontWeight: 700, cursor: "pointer", marginBottom: "1rem" }}
+                  >
+                    ← Back to Videos
+                  </button>
+                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: "12px", overflow: "hidden" }}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}`}
+                      title={selectedVideo.title}
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                      allowFullScreen
+                    />
+                  </div>
+                  <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ color: "white", fontSize: "1.2rem", fontWeight: 700 }}>{selectedVideo.title}</h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleWatched(selectedVideo.id)}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        border: selectedVideo.watched ? "1px solid #10b981" : "1px solid rgba(76,53,200,0.45)",
+                        borderRadius: "12px",
+                        background: selectedVideo.watched ? "rgba(16,185,129,0.2)" : "linear-gradient(135deg, rgba(76,53,200,0.7), rgba(147,51,234,0.55))",
+                        color: selectedVideo.watched ? "#10b981" : "white",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {selectedVideo.watched ? "✓ Watched" : "Mark as Watched"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: "1rem" }}>
+                  {phaseData.videos.map(video => (
+                    <div
+                      key={video.id}
+                      style={{
+                        display: "flex",
+                        gap: "1rem",
+                        background: "rgba(76,53,200,0.08)",
+                        border: "1px solid rgba(76,53,200,0.22)",
+                        borderRadius: "12px",
+                        padding: "1rem",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                      }}
+                      onClick={() => setSelectedVideo(video)}
+                    >
+                      <div style={{ width: "160px", height: "90px", borderRadius: "8px", background: "linear-gradient(135deg, rgba(76,53,200,0.3), rgba(147,51,234,0.2))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <span style={{ fontSize: "2rem" }}>▶️</span>
+                      </div>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                        <h3 style={{ color: "white", fontSize: "1rem", fontWeight: 700, marginBottom: "0.25rem" }}>{video.title}</h3>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>{video.duration}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        {video.watched && <span style={{ color: "#10b981", fontSize: "1.5rem" }}>✓</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "study" && (
+            <div style={{ color: "rgba(255,255,255,0.9)", lineHeight: 1.8, fontSize: "0.95rem" }}>
+              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>
+                {phaseData.studyMaterial}
+              </pre>
+            </div>
+          )}
+
+          {activeTab === "practice" && (
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {phaseData.exercises.map(exercise => (
+                <div
+                  key={exercise.id}
+                  style={{
+                    background: exercise.completed ? "rgba(16,185,129,0.08)" : "rgba(76,53,200,0.08)",
+                    border: exercise.completed ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(76,53,200,0.22)",
+                    borderRadius: "12px",
+                    padding: "1rem",
+                    display: "flex",
+                    gap: "1rem",
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={exercise.completed}
+                    onChange={() => toggleExercise(exercise.id)}
+                    style={{ width: "20px", height: "20px", cursor: "pointer" }}
+                  />
+                  <span style={{ color: exercise.completed ? "#10b981" : "white", fontSize: "0.95rem", flex: 1, fontWeight: exercise.completed ? 600 : 400 }}>
+                    {exercise.description}
+                  </span>
+                  {exercise.completed && <span style={{ color: "#10b981", fontSize: "1.2rem" }}>✓</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Progress and Complete Button */}
+        <div style={{ background: "rgba(13,10,40,0.85)", border: "1px solid rgba(76,53,200,0.28)", borderRadius: "18px", padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <span style={{ color: "white", fontSize: "1.1rem", fontWeight: 700 }}>Phase Progress</span>
+            <span style={{ color: "#a78bfa", fontSize: "1.1rem", fontWeight: 700 }}>{totalProgress}%</span>
+          </div>
+          <div style={{ height: "12px", borderRadius: "999px", background: "rgba(255,255,255,0.1)", overflow: "hidden", marginBottom: "1rem" }}>
+            <div style={{ height: "100%", width: `${totalProgress}%`, background: "linear-gradient(90deg, #4c35c8, #9333ea)", borderRadius: "999px", transition: "width 0.3s ease" }} />
+          </div>
+          <button
+            type="button"
+            onClick={handlePhaseComplete}
+            disabled={totalProgress < 50 || phaseComplete}
+            style={{
+              width: "100%",
+              padding: "1rem",
+              border: "none",
+              borderRadius: "12px",
+              background: totalProgress >= 50 && !phaseComplete ? "linear-gradient(135deg, #4c35c8, #9333ea)" : "rgba(76,53,200,0.3)",
+              color: totalProgress >= 50 && !phaseComplete ? "white" : "rgba(255,255,255,0.4)",
+              fontWeight: 800,
+              fontSize: "1.1rem",
+              cursor: totalProgress >= 50 && !phaseComplete ? "pointer" : "not-allowed",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {phaseComplete ? "✓ Phase Completed" : "Mark Phase as Complete"}
+          </button>
+        </div>
       </div>
-
-      <div style={{ borderRadius: "14px", border: "1px solid rgba(76,53,200,0.3)", background: "rgba(13,11,30,0.9)", padding: "0.95rem", marginBottom: "0.8rem" }}>
-        <h3 style={{ color: "white", marginTop: 0 }}>Reading & examples</h3>
-        <p style={{ color: "rgba(255,255,255,0.72)", marginBottom: 0 }}>
-          Curated notes and worked examples for this phase.
-        </p>
-      </div>
-
-      <div style={{ borderRadius: "14px", border: "1px solid rgba(76,53,200,0.3)", background: "rgba(13,11,30,0.9)", padding: "0.95rem", marginBottom: "1rem" }}>
-        <h3 style={{ color: "white", marginTop: 0 }}>Practice</h3>
-        <p style={{ color: "rgba(255,255,255,0.72)", marginBottom: 0 }}>
-          Guided tasks and a mini challenge — then you’ll unlock the phase quiz.
-        </p>
-      </div>
-
-      {!mockPassed && (
-        <button
-          type="button"
-          onClick={handleMarkContentComplete}
-          disabled={contentDone}
-          style={{
-            width: "100%",
-            border: "none",
-            borderRadius: "12px",
-            color: "white",
-            fontWeight: 800,
-            padding: "0.9rem 1rem",
-            background: contentDone ? "rgba(76,53,200,0.35)" : "linear-gradient(135deg, #4c35c8, #6d4fd6)",
-            cursor: contentDone ? "default" : "pointer",
-            boxShadow: contentDone ? "none" : "0 0 22px rgba(76,53,200,0.3)",
-            transition: "all 300ms ease",
-          }}
-        >
-          {contentDone ? "Starting phase quiz…" : "Mark as Complete"}
-        </button>
-      )}
-
-      {contentDone && !mockPassed && (
-        <button
-          type="button"
-          onClick={() => setLocation(`/skills/${sk.id}/${lv.id}/${phase.id}/test`)}
-          style={{
-            marginTop: "0.65rem",
-            width: "100%",
-            border: "1px solid rgba(76,53,200,0.5)",
-            borderRadius: "12px",
-            color: "#e9d5ff",
-            fontWeight: 800,
-            padding: "0.85rem 1rem",
-            background: "rgba(76,53,200,0.2)",
-            cursor: "pointer",
-          }}
-        >
-          Open phase quiz
-        </button>
-      )}
     </div>
   );
 }

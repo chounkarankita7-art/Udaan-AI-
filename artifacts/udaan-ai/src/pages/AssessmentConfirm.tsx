@@ -82,13 +82,22 @@ export default function AssessmentConfirm() {
   const skillIconMap: Record<string, string> = {
     "Web Development": "🌐",
     "App Development": "📱",
+    "Mobile App Development": "📱",
     "Data Science": "📊",
     "AI/ML": "🤖",
+    "AI & Machine Learning": "🤖",
     Cybersecurity: "🛡️",
     Design: "🎨",
+    "UI/UX Design": "🎨",
+    "Graphic Design": "✏️",
     "Soft Skills": "💬",
+    "Soft Skills (Communication)": "💬",
+    "Soft Skills (Leadership)": "👥",
+    "Public Speaking": "🎤",
+    "Digital Marketing": "📢",
     Python: "🐍",
     Excel: "📗",
+    "Excel & Data Analysis": "📈",
   };
 
   const summaryBullets = useMemo(() => {
