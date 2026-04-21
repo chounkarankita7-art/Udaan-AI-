@@ -859,6 +859,56 @@ export function mapSkillsFromConversation(history: AnswerHistory[]): string[] {
   const answers = history.map(h => h.answer).join(" ").toLowerCase();
   const allAnswers = history.map(h => h.answer);
 
+  // Arts/Humanities + Get Job
+  if (answers.includes("arts") && answers.includes("humanities") && answers.includes("job")) {
+    return ["Communication Skills", "Content Writing", "Digital Marketing", "MS Office Basics", "Resume Building", "Interview Preparation"];
+  }
+
+  // Arts/Humanities + Business
+  if (answers.includes("arts") && answers.includes("humanities") && answers.includes("business")) {
+    return ["Business Communication", "Social Media Marketing", "Content Creation", "Basic Finance", "Entrepreneurship Basics", "Brand Building"];
+  }
+
+  // Law + Get Job
+  if (answers.includes("law") && answers.includes("job")) {
+    return ["Legal Research", "Document Drafting", "Communication Skills", "MS Office", "Legal Tech Basics", "Professional Ethics"];
+  }
+
+  // Healthcare/Nursing + Upskill
+  if (answers.includes("healthcare") || answers.includes("nursing") && answers.includes("upskill")) {
+    return ["Healthcare Technology", "Medical Data Basics", "Communication Skills", "MS Excel for Healthcare", "Medical Content Writing", "Patient Management Systems"];
+  }
+
+  // Education/Teaching + Upskill
+  if (answers.includes("education") || answers.includes("teaching") && answers.includes("upskill")) {
+    return ["EdTech Tools", "Content Creation", "Online Teaching", "Presentation Skills", "Canva for Education", "YouTube for Teaching"];
+  }
+
+  // Technology Interest + Beginner
+  if (answers.includes("technology") && answers.includes("beginner")) {
+    return ["Computer Basics", "Python Introduction", "Web Development Basics", "Digital Literacy", "Problem Solving", "Communication Skills"];
+  }
+
+  // Marketing Interest
+  if (answers.includes("marketing") || answers.includes("communication")) {
+    return ["Social Media Marketing", "Content Creation", "Canva", "SEO Basics", "Email Marketing", "Digital Advertising"];
+  }
+
+  // Design Interest
+  if (answers.includes("design") || answers.includes("creative")) {
+    return ["Canva", "Figma Basics", "Color Theory", "Typography", "UI Design Principles", "Portfolio Building"];
+  }
+
+  // Content/Writing Interest
+  if (answers.includes("content") || answers.includes("writing")) {
+    return ["Blog Writing", "SEO Writing", "Copywriting", "Content Strategy", "Social Media Content", "Storytelling"];
+  }
+
+  // Analytics Interest
+  if (answers.includes("data") || answers.includes("analytics")) {
+    return ["MS Excel", "Basic Statistics", "Google Analytics", "Data Visualization", "SQL Basics", "Power BI Basics"];
+  }
+
   // PCM + Engineering + CS
   if (answers.includes("pcm") && answers.includes("engineering") && answers.includes("computer science")) {
     return ["Python", "Data Structures", "Web Development", "System Design", "Git & GitHub", "Interview Prep"];
@@ -925,7 +975,7 @@ export function mapSkillsFromConversation(history: AnswerHistory[]): string[] {
   }
 
   // Working Professional IT + AI/ML
-  if (answers.includes("working") && answers.includes("it") && answers.includes("ai") || answers.includes("ml")) {
+  if (answers.includes("working") && answers.includes("it") && (answers.includes("ai") || answers.includes("ml"))) {
     return ["Python Advanced", "Machine Learning", "Deep Learning", "NLP", "MLOps", "AI Project Building"];
   }
 
@@ -939,7 +989,7 @@ export function mapSkillsFromConversation(history: AnswerHistory[]): string[] {
     return ["Digital Skills Basics", "MS Office/Excel", "Digital Marketing", "Content Creation", "Freelancing Skills", "Communication Skills"];
   }
 
-  // Default fallback - map based on final direction
+  // Default fallback - map based on final direction (but NEVER show Python + Web Dev + Data Science as generic default)
   if (answers.includes("web development")) return ["HTML/CSS", "JavaScript", "React", "Node.js", "Git", "Deployment"];
   if (answers.includes("data science")) return ["Python", "Statistics", "Pandas", "Machine Learning", "SQL", "Data Visualization"];
   if (answers.includes("mobile")) return ["Flutter", "Dart", "Mobile UI", "API Integration", "State Management", "App Deployment"];
@@ -948,6 +998,6 @@ export function mapSkillsFromConversation(history: AnswerHistory[]): string[] {
   if (answers.includes("finance")) return ["Excel", "Financial Analysis", "Accounting", "Taxation", "Investment Basics", "Fintech"];
   if (answers.includes("cybersecurity")) return ["Network Security", "Ethical Hacking", "Web Security", "Cryptography", "Security Tools", "Compliance"];
 
-  // Ultimate fallback
-  return ["Python", "Web Development Basics", "Data Science Intro", "Communication Skills", "Problem Solving", "Project Building"];
+  // Ultimate fallback - generic learning skills (NOT Python + Web Dev + Data Science)
+  return ["Communication Skills", "Problem Solving", "Digital Literacy", "Time Management", "Project Building", "Portfolio Creation"];
 }
