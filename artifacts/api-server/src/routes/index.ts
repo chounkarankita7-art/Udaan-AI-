@@ -13,6 +13,7 @@ import mockTestRouter from "./mock-test";
 import mockInterviewRouter from "./mock-interview";
 import resumeRouter from "./resume";
 import growthRouter from "./growth";
+import skillProgressRouter from "./skill-progress";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(mockTestRouter);
 router.use(mockInterviewRouter);
 router.use(resumeRouter);
 router.use(growthRouter);
+router.use(skillProgressRouter);
 
 export default router;

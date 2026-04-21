@@ -85,6 +85,30 @@ export type DevCertificate = {
   skillName?: string | null;
 };
 
+export type DevUserProgress = {
+  id: Id;
+  userId: Id;
+  skillId: string;
+  level: "beginner" | "intermediate" | "advanced";
+  phaseNumber: number;
+  status: "locked" | "unlocked" | "completed";
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type DevUserTestResult = {
+  id: Id;
+  userId: Id;
+  skillId: string;
+  testType: "phase" | "level" | "final";
+  score: number;
+  passed: boolean;
+  takenAt: Date;
+  phaseNumber?: number | null;
+  level?: string | null;
+};
+
 export type DevQuizSession = {
   questions: {
     id: string;
@@ -112,6 +136,8 @@ export const devStore = {
   lectures: [] as DevLecture[],
   notes: [] as DevNote[],
   quizSessions: new Map<string, DevQuizSession>(),
+  userProgress: [] as DevUserProgress[],
+  userTestResults: [] as DevUserTestResult[],
 };
 
 export function ensureDevSeedData(): void {

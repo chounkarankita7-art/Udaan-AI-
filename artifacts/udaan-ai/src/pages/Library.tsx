@@ -17,25 +17,37 @@ interface Resource {
 
 const sampleResources: Resource[] = [
   // Python resources
-  { id: "1", title: "Python for Beginners", type: "video", skill: "Python", description: "Complete Python beginner course covering basics to advanced concepts", url: "#", bookmarked: false },
-  { id: "2", title: "Python Cheat Sheet", type: "cheat-sheet", skill: "Python", description: "Quick reference guide for Python syntax and common operations", url: "#", bookmarked: false },
-  { id: "3", title: "Python Official Docs", type: "article", skill: "Python", description: "Official Python documentation and tutorials", url: "#", bookmarked: false },
+  { id: "1", title: "Python for Beginners", type: "video", skill: "Python", description: "Complete Python beginner course covering basics to advanced concepts", url: "https://www.youtube.com/watch?v=kqtD5dpn9C8", bookmarked: false },
+  { id: "2", title: "Python Cheat Sheet", type: "cheat-sheet", skill: "Python", description: "Quick reference guide for Python syntax and common operations", url: "https://www.pythoncheatsheet.org", bookmarked: false },
+  { id: "3", title: "Python Official Docs", type: "article", skill: "Python", description: "Official Python documentation and tutorials", url: "https://docs.python.org/3/tutorial", bookmarked: false },
   
   // Web Dev resources
-  { id: "4", title: "HTML & CSS Crash Course", type: "video", skill: "Web Development", description: "Learn HTML and CSS from scratch in this comprehensive course", url: "#", bookmarked: false },
-  { id: "5", title: "JavaScript 30", type: "video", skill: "Web Development", description: "30 day JavaScript coding challenge with 30 projects", url: "#", bookmarked: false },
-  { id: "6", title: "CSS Tricks", type: "article", skill: "Web Development", description: "Daily articles about CSS tips, tricks, and techniques", url: "#", bookmarked: false },
+  { id: "4", title: "HTML & CSS Crash Course", type: "video", skill: "Web Development", description: "Learn HTML and CSS from scratch in this comprehensive course", url: "https://www.youtube.com/watch?v=pQN-pnXPaVg", bookmarked: false },
+  { id: "5", title: "JavaScript 30", type: "video", skill: "Web Development", description: "30 day JavaScript coding challenge with 30 projects", url: "https://javascript30.com", bookmarked: false },
+  { id: "6", title: "CSS Tricks", type: "article", skill: "Web Development", description: "Daily articles about CSS tips, tricks, and techniques", url: "https://css-tricks.com", bookmarked: false },
   
   // AI & ML resources
-  { id: "7", title: "Machine Learning Crash Course", type: "video", skill: "AI & ML", description: "Google's free machine learning course with hands-on exercises", url: "#", bookmarked: false },
-  { id: "8", title: "Kaggle Free Courses", type: "tool", skill: "AI & ML", description: "Free courses on data science, machine learning, and AI", url: "#", bookmarked: false },
+  { id: "7", title: "Machine Learning Crash Course", type: "video", skill: "AI & ML", description: "Google's free machine learning course with hands-on exercises", url: "https://www.youtube.com/watch?v=NWONeJKn6kc", bookmarked: false },
+  { id: "8", title: "Kaggle Free Courses", type: "tool", skill: "AI & ML", description: "Free courses on data science, machine learning, and AI", url: "https://www.kaggle.com/learn", bookmarked: false },
   
   // Soft Skills resources
-  { id: "9", title: "Public Speaking Tips", type: "article", skill: "Soft Skills", description: "Essential tips and techniques for effective public speaking", url: "#", bookmarked: false },
-  { id: "10", title: "Communication Skills Guide", type: "article", skill: "Soft Skills", description: "Comprehensive guide to improving communication skills", url: "#", bookmarked: false },
+  { id: "9", title: "Public Speaking Tips", type: "article", skill: "Soft Skills", description: "Essential tips and techniques for effective public speaking", url: "https://www.youtube.com/watch?v=tUqzMkKqVNY", bookmarked: false },
+  { id: "10", title: "Communication Skills Guide", type: "article", skill: "Soft Skills", description: "Comprehensive guide to improving communication skills", url: "https://www.youtube.com/watch?v=HAnw168huqA", bookmarked: false },
+  
+  // Extra resources
+  { id: "11", title: "Figma Tutorial", type: "video", skill: "UI/UX Design", description: "Complete Figma tutorial for beginners", url: "https://www.youtube.com/watch?v=FTFaQWZBqQ8", bookmarked: false },
+  { id: "12", title: "Canva Design School", type: "tool", skill: "Graphic Design", description: "Free design courses and tutorials", url: "https://www.canva.com/designschool", bookmarked: false },
+  { id: "13", title: "Cybersecurity Full Course", type: "video", skill: "Cybersecurity", description: "Complete cybersecurity course for beginners", url: "https://www.youtube.com/watch?v=hXSFdwIOfnE", bookmarked: false },
+  { id: "14", title: "Digital Marketing Course", type: "video", skill: "Digital Marketing", description: "Comprehensive digital marketing course", url: "https://www.youtube.com/watch?v=nU-IIXBWlS4", bookmarked: false },
+  { id: "15", title: "Excel Full Course", type: "video", skill: "Data Science", description: "Complete Excel course for data analysis", url: "https://www.youtube.com/watch?v=PSNXoAs2FtQ", bookmarked: false },
+  { id: "16", title: "Coursera Free Courses", type: "tool", skill: "All Skills", description: "Free courses from top universities", url: "https://www.coursera.org", bookmarked: false },
+  { id: "17", title: "freeCodeCamp", type: "tool", skill: "Web Development", description: "Free coding bootcamp and certifications", url: "https://www.freecodecamp.org", bookmarked: false },
+  { id: "18", title: "Duolingo English", type: "tool", skill: "Soft Skills", description: "Free language learning platform", url: "https://www.duolingo.com", bookmarked: false },
+  { id: "19", title: "TED Talks", type: "article", skill: "Soft Skills", description: "Inspiring talks from experts worldwide", url: "https://www.ted.com/talks", bookmarked: false },
+  { id: "20", title: "HubSpot Marketing Blog", type: "article", skill: "Digital Marketing", description: "Marketing tips and strategies", url: "https://blog.hubspot.com", bookmarked: false },
 ];
 
-const skills = ["All", "Python", "Web Development", "AI & ML", "Soft Skills", "JavaScript", "Data Science", "Design"];
+const skills = ["All", "Python", "Web Development", "AI & ML", "Soft Skills", "JavaScript", "Data Science", "Design", "UI/UX Design", "Graphic Design", "Cybersecurity", "Digital Marketing"];
 const filterTypes = ["All", "Videos", "Articles", "Tools", "Cheat Sheets"];
 
 function getTypeIcon(type: ResourceType): string {
@@ -313,6 +325,7 @@ export default function Library() {
               {/* Open Button */}
               <button
                 type="button"
+                onClick={() => window.open(resource.url, "_blank")}
                 style={{
                   padding: "0.75rem 1rem",
                   border: "1px solid rgba(76,53,200,0.45)",

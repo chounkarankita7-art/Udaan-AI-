@@ -1,0 +1,953 @@
+export interface QuestionData {
+  question: string;
+  options: string[];
+  isFreeText: boolean;
+}
+
+export interface AnswerHistory {
+  question: string;
+  answer: string;
+  questionIndex: number;
+}
+
+export type QuestionStep = "welcome" | "qualification" | "stream" | "subjects" | "direction" | "field" | "goal" | "plan" | "challenge" | "specific-skills" | "complete";
+
+// WELCOME SCREEN
+export const WELCOME_SCREEN: QuestionData = {
+  question: "Hey there! 👋 I'm your Udaan AI mentor. I'm going to ask you a few questions to understand you better and build your perfect personalised learning roadmap. There are no right or wrong answers — just be honest and I'll handle the rest!",
+  options: ["Let's Begin →"],
+  isFreeText: false,
+};
+
+// Q1: QUALIFICATION (always same)
+export const Q1_QUALIFICATION: QuestionData = {
+  question: "First things first — what's your current qualification?",
+  options: [
+    "📚 In School (10th/11th/12th)",
+    "🎓 Completed 12th",
+    "🏫 Currently in College/University",
+    "🎓 Completed Graduation",
+    "💼 Working Professional",
+    "🔄 Looking for Career Change",
+  ],
+  isFreeText: false,
+};
+
+// Q2: Stream (if Q1 = School/Completed 12th)
+export const Q2_STREAM: QuestionData = {
+  question: "Which stream are you in?",
+  options: [
+    "🔬 Science",
+    "📊 Commerce",
+    "🎨 Arts/Humanities",
+    "📚 Vocational/Other",
+  ],
+  isFreeText: false,
+};
+
+// Q2: Currently studying (if Q1 = Currently in College)
+export const Q2_COLLEGE: QuestionData = {
+  question: "What are you currently studying?",
+  options: [
+    "💻 Engineering (BE/BTech)",
+    "🖥️ BCA/BSc Computer Science",
+    "💼 BBA/BBM/BCom",
+    "🎨 Design (BDes/BFA)",
+    "📰 Mass Communication/Journalism",
+    "🔬 BSc Science",
+    "📚 BA Arts/Humanities",
+    "⚖️ Law (LLB)",
+    "🤷 Other",
+  ],
+  isFreeText: false,
+};
+
+// Q2: Graduated in (if Q1 = Completed Graduation)
+export const Q2_GRADUATION: QuestionData = {
+  question: "What did you graduate in?",
+  options: [
+    "💻 Engineering/Technology",
+    "💼 Business/Commerce",
+    "🎨 Design/Arts",
+    "🔬 Science",
+    "📰 Media/Journalism",
+    "📚 Humanities/Social Science",
+    "🤷 Other",
+  ],
+  isFreeText: false,
+};
+
+// Q2: Working in (if Q1 = Working Professional)
+export const Q2_WORKING: QuestionData = {
+  question: "What field are you currently working in?",
+  options: [
+    "💻 IT/Technology",
+    "📊 Finance/Banking",
+    "🎨 Design/Creative",
+    "📢 Marketing/Sales",
+    "🏥 Healthcare",
+    "🏭 Manufacturing/Operations",
+    "📚 Education",
+    "🤷 Other field",
+  ],
+  isFreeText: false,
+};
+
+// Q2: Currently doing (if Q1 = Career Change)
+export const Q2_CAREER_CHANGE: QuestionData = {
+  question: "What are you currently doing?",
+  options: [
+    "💼 Working in non-tech field",
+    "🏠 Homemaker wanting to restart career",
+    "🎓 Just completed studies, exploring",
+    "❌ Job loss, need to rebuild skills",
+    "🔄 Completely lost, need guidance",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Science subjects (if Q2 = Science)
+export const Q3_SCIENCE_SUBJECTS: QuestionData = {
+  question: "Which subjects do you have?",
+  options: [
+    "📐 PCM (Physics, Chemistry, Maths)",
+    "⚗️ PCB (Physics, Chemistry, Biology)",
+    "🔬 PCMB (All four subjects)",
+    "💻 CS/IT (Computer Science)",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Commerce subjects (if Q2 = Commerce)
+export const Q3_COMMERCE_SUBJECTS: QuestionData = {
+  question: "Which subjects do you have?",
+  options: [
+    "📊 With Mathematics",
+    "📚 Without Mathematics",
+    "💹 Economics & Statistics focused",
+    "📱 IT/Computer as additional subject",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Arts subjects (if Q2 = Arts)
+export const Q3_ARTS_SUBJECTS: QuestionData = {
+  question: "Which subjects/area are you in?",
+  options: [
+    "✍️ English & Literature",
+    "🎨 Fine Arts & Drawing",
+    "📰 Journalism & Mass Communication",
+    "🧠 Psychology & Sociology",
+    "📜 History & Political Science",
+    "🗣️ Languages & Linguistics",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Engineering branch (if Q2 = Engineering)
+export const Q3_ENGINEERING_BRANCH: QuestionData = {
+  question: "Which engineering branch?",
+  options: [
+    "💻 Computer Science/IT",
+    "⚡ Electronics & Communication",
+    "⚙️ Mechanical",
+    "🏗️ Civil",
+    "🔬 Chemical/Other",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Business area (if Q2 = BBA/BCom)
+export const Q3_BUSINESS_AREA: QuestionData = {
+  question: "What area of business interests you?",
+  options: [
+    "📢 Marketing & Sales",
+    "💰 Finance & Accounting",
+    "👥 Human Resources",
+    "🏢 Entrepreneurship",
+    "💻 Business + Technology (Fintech/Digital)",
+    "🤷 Not sure",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Design stream (if Q2 = Design)
+export const Q3_DESIGN_STREAM: QuestionData = {
+  question: "Which design stream?",
+  options: [
+    "🖥️ UI/UX Design (apps & web)",
+    "🎨 Graphic & Visual Design",
+    "🏠 Interior/Product Design",
+    "🎬 Motion & Film Design",
+    "🤷 Exploring all areas",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Working in tech duration (if Q2 = IT/Technology)
+export const Q3_TECH_DURATION: QuestionData = {
+  question: "How long have you been working in tech?",
+  options: [
+    "📅 Less than 1 year (fresher)",
+    "📅 1-3 years",
+    "📅 3-5 years",
+    "📅 5+ years (senior)",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Goal in finance (if Q2 = Finance/Banking)
+export const Q3_FINANCE_GOAL: QuestionData = {
+  question: "What's your goal?",
+  options: [
+    "📈 Move to higher position",
+    "💹 Get into investment banking",
+    "💻 Move into Fintech",
+    "🚀 Start financial advisory business",
+    "📊 Learn data skills for finance",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Want to move into (if Q2 = Other field wanting to change)
+export const Q3_MOVE_INTO: QuestionData = {
+  question: "What field do you want to move into?",
+  options: [
+    "💻 Technology/IT",
+    "📊 Data & Analytics",
+    "🎨 Design & Creative",
+    "📢 Digital Marketing",
+    "🏢 Business Management",
+    "🤷 Help me decide",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Direction for career change (if Q2 = Career Change)
+export const Q3_CAREER_DIRECTION: QuestionData = {
+  question: "What direction are you thinking of moving?",
+  options: [
+    "💻 Technology & Software",
+    "📊 Data & Analytics",
+    "🎨 Design & Creative",
+    "📢 Digital Marketing",
+    "✍️ Content & Writing",
+    "🤷 Help me decide completely",
+  ],
+  isFreeText: false,
+};
+
+// Q3: Other field (if Q2 = Other in graduation)
+export const Q3_OTHER_FIELD: QuestionData = {
+  question: "What field were you studying in?",
+  options: [
+    "📚 Arts & Humanities",
+    "⚖️ Law",
+    "🏥 Healthcare/Nursing",
+    "🌾 Agriculture",
+    "📖 Education/Teaching",
+    "🤷 Something else",
+  ],
+  isFreeText: false,
+};
+
+// Q4: PCM - Plan after 12th
+export const Q4_PCM_PLAN: QuestionData = {
+  question: "What's your plan after 12th?",
+  options: [
+    "🎓 Engineering (JEE preparation)",
+    "💻 Direct into Software/Coding",
+    "📊 Data Science & AI field",
+    "🏦 Finance & Banking sector",
+    "🤷 Still confused, need guidance",
+  ],
+  isFreeText: false,
+};
+
+// Q4: PCB - Direction
+export const Q4_PCB_DIRECTION: QuestionData = {
+  question: "Your biology background opens many doors! What direction interests you?",
+  options: [
+    "🏥 Medical (NEET preparation)",
+    "💊 Pharmacy or Nursing",
+    "🧬 Biotech & Research",
+    "💻 Health Tech & Bioinformatics",
+    "✍️ Medical Content/Writing",
+    "🤷 Still figuring out",
+  ],
+  isFreeText: false,
+};
+
+// Q4: PCMB - What pulls you more
+export const Q4_PCMB_PULL: QuestionData = {
+  question: "You have both maths and biology — great combination! What pulls you more?",
+  options: [
+    "🏥 Medical/Healthcare path",
+    "💻 Technology & Engineering",
+    "🧬 Research & Science",
+    "📊 Data & Analytics",
+    "🤷 Help me decide",
+  ],
+  isFreeText: false,
+};
+
+// Q4: CS/IT - What to build
+export const Q4_CS_BUILD: QuestionData = {
+  question: "You already have CS background! What do you want to build?",
+  options: [
+    "🌐 Web Applications",
+    "📱 Mobile Apps",
+    "🤖 AI & Machine Learning",
+    "🔒 Cybersecurity",
+    "🎮 Game Development",
+    "🤷 Not decided yet",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Commerce with Maths - Direction
+export const Q4_COMMERCE_MATHS_DIRECTION: QuestionData = {
+  question: "Commerce with Maths opens amazing doors! What direction excites you?",
+  options: [
+    "📊 Chartered Accountancy (CA)",
+    "💹 Stock Market & Trading",
+    "📈 Financial Analysis & Banking",
+    "💼 Business Management (MBA path)",
+    "💻 Fintech (Finance + Technology)",
+    "🤷 Still exploring options",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Commerce without Maths - Interests
+export const Q4_COMMERCE_NO_MATHS: QuestionData = {
+  question: "Commerce without maths still has great opportunities! What interests you?",
+  options: [
+    "📊 Accounting & Taxation",
+    "📢 Marketing & Sales",
+    "🏢 Business Management",
+    "✍️ Business Content & Writing",
+    "💻 Digital Marketing",
+    "🤷 Still exploring",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Journalism - What excites you
+export const Q4_JOURNALISM: QuestionData = {
+  question: "Media is transforming fast! What excites you?",
+  options: [
+    "📱 Digital Journalism",
+    "🎬 Video Content Creation",
+    "📻 Podcasting & Audio",
+    "✍️ Content Writing & Blogging",
+    "📸 Photography & Photojournalism",
+    "📺 TV & Broadcast Media",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Fine Arts - Direction
+export const Q4_FINE_ARTS: QuestionData = {
+  question: "Creative field has gone digital! What direction?",
+  options: [
+    "🎨 Graphic Design (digital)",
+    "📱 UI/UX Design for apps",
+    "🎬 Motion Graphics & Animation",
+    "📸 Photography (professional)",
+    "🖌️ Traditional + digital art",
+    "🤷 Not sure yet",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Psychology - Career paths
+export const Q4_PSYCHOLOGY: QuestionData = {
+  question: "Psychology has many career paths! What interests you?",
+  options: [
+    "🧠 Clinical Psychology/Counselling",
+    "💼 HR & Organizational Psychology",
+    "📢 Consumer Psychology/Marketing",
+    "📚 Teaching & Research",
+    "💻 User Research for Tech products",
+  ],
+  isFreeText: false,
+};
+
+// Q4: English/Literature - Goal
+export const Q4_ENGLISH: QuestionData = {
+  question: "Language skills are super valuable! What's your goal?",
+  options: [
+    "✍️ Content Writing & Copywriting",
+    "📰 Journalism & Reporting",
+    "📚 Publishing & Editing",
+    "🎭 Creative Writing",
+    "🌐 Technical Writing for Tech",
+  ],
+  isFreeText: false,
+};
+
+// Q4: CS/IT Engineering - Focus
+export const Q4_CS_ENGINEERING_FOCUS: QuestionData = {
+  question: "CS engineers have many paths! What's your main focus right now?",
+  options: [
+    "💼 Get placed in good tech company",
+    "🚀 Build my own startup",
+    "💻 Freelancing alongside college",
+    "🎓 Higher studies (MS/MTech)",
+    "🤷 Still figuring out",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Non-CS Engineering - Goal
+export const Q4_NON_CS_ENGINEERING_GOAL: QuestionData = {
+  question: "Many non-CS engineers switch to tech! What's your goal?",
+  options: [
+    "💻 Switch to software/coding",
+    "📊 Data analytics in my field",
+    "🏢 Core job in my branch",
+    "💼 MBA after engineering",
+    "🤷 Not decided yet",
+  ],
+  isFreeText: false,
+};
+
+// Q4: BCA/BSc CS - Focus
+export const Q4_BCA_FOCUS: QuestionData = {
+  question: "You have a tech foundation! What do you want to focus on?",
+  options: [
+    "💼 Job placement after graduation",
+    "🚀 Freelancing now",
+    "💻 Build projects & portfolio",
+    "🎓 MCA/MTech after graduation",
+    "🤷 Still exploring",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Engineering - Looking for now
+export const Q4_ENGINEERING_NOW: QuestionData = {
+  question: "What are you looking for now?",
+  options: [
+    "💼 Job in tech company",
+    "🚀 Start my own business",
+    "💻 Freelancing",
+    "🎓 Higher studies (MS/MBA)",
+    "📊 Switch to Data Science/AI",
+    "🤷 Still figuring out",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Business - Next step
+export const Q4_BUSINESS_NEXT: QuestionData = {
+  question: "What's your next step?",
+  options: [
+    "💼 Corporate job",
+    "📊 MBA/Higher studies",
+    "🏢 Start my own business",
+    "💻 Learn tech skills (Fintech/Digital Marketing)",
+    "🤷 Exploring options",
+  ],
+  isFreeText: false,
+};
+
+// Q4: IT working - Goal right now
+export const Q4_IT_GOAL: QuestionData = {
+  question: "What's your goal right now?",
+  options: [
+    "📈 Get promoted to senior role",
+    "💰 Switch to higher paying company",
+    "🤖 Move into AI/ML field",
+    "🚀 Start my own tech business",
+    "💻 Upskill to stay relevant",
+    "🌍 Get international/remote job",
+  ],
+  isFreeText: false,
+};
+
+// Q5: PCM Engineering - Field
+export const Q5_ENGINEERING_FIELD: QuestionData = {
+  question: "Which engineering field interests you?",
+  options: [
+    "💻 Computer Science/IT",
+    "⚡ Electronics & Communication",
+    "⚙️ Mechanical Engineering",
+    "🏗️ Civil Engineering",
+    "🤷 Not decided yet",
+  ],
+  isFreeText: false,
+};
+
+// Q5: PCM Software - Area
+export const Q5_SOFTWARE_AREA: QuestionData = {
+  question: "Which area of software development?",
+  options: [
+    "🌐 Web Development",
+    "📱 Mobile App Development",
+    "🤖 Artificial Intelligence",
+    "🔒 Cybersecurity",
+    "🤷 Help me choose",
+  ],
+  isFreeText: false,
+};
+
+// Q5: PCM Data Science - Field
+export const Q5_DATA_FIELD: QuestionData = {
+  question: "Your maths background is great! Which data field?",
+  options: [
+    "📊 Data Science & Analytics",
+    "🤖 Machine Learning & AI",
+    "📈 Business Analytics",
+    "💹 Financial Data Analysis",
+    "🤷 Not sure yet",
+  ],
+  isFreeText: false,
+};
+
+// Q5: PCB Health Tech - Area
+export const Q5_HEALTH_TECH_AREA: QuestionData = {
+  question: "Health Tech combines biology + tech! Which area?",
+  options: [
+    "🧬 Bioinformatics",
+    "📊 Healthcare Data Analytics",
+    "💊 Pharmaceutical Tech",
+    "🏥 Hospital Management Systems",
+    "🤷 Explore all options",
+  ],
+  isFreeText: false,
+};
+
+// Q5: PCB Medical - NEET
+export const Q5_MEDICAL_NEET: QuestionData = {
+  question: "Are you preparing for NEET?",
+  options: [
+    "✅ Yes actively preparing",
+    "📚 Just started preparation",
+    "🔄 Dropped and trying again",
+    "❌ Reconsidering medical path",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Commerce Maths Fintech - Area
+export const Q5_FINTECH_AREA: QuestionData = {
+  question: "Fintech is booming in India! Which area?",
+  options: [
+    "💳 Payment Systems & UPI",
+    "🤖 AI in Finance",
+    "📊 Financial Data Analytics",
+    "💰 Crypto & Blockchain basics",
+    "🏦 Digital Banking",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Stock Market - Goal
+export const Q5_STOCK_MARKET_GOAL: QuestionData = {
+  question: "What's your goal with stock market?",
+  options: [
+    "📈 Personal investing & trading",
+    "💼 Career as financial analyst",
+    "🏢 Start investment advisory",
+    "📊 Quantitative trading & algo",
+    "🤷 General knowledge first",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Digital Marketing - Area
+export const Q5_DIGITAL_MARKETING_AREA: QuestionData = {
+  question: "Digital marketing is everywhere! Which area?",
+  options: [
+    "📱 Social Media Marketing",
+    "🔍 SEO & Content Marketing",
+    "💰 Performance Marketing & Ads",
+    "📧 Email & CRM Marketing",
+    "🎯 Complete digital marketing",
+  ],
+  isFreeText: false,
+};
+
+// Q5: CS Engineering - Company type
+export const Q5_CS_COMPANY_TYPE: QuestionData = {
+  question: "Which type of company?",
+  options: [
+    "🏢 Service companies (TCS/Infosys)",
+    "🚀 Product companies (Google/Amazon)",
+    "💡 Startups",
+    "🌍 International companies",
+    "🤷 Any good opportunity",
+  ],
+  isFreeText: false,
+};
+
+// Q5: CS Engineering - Tech area
+export const Q5_CS_TECH_AREA: QuestionData = {
+  question: "Which tech area are you strongest in?",
+  options: [
+    "🌐 Web Development",
+    "📊 Data Science & AI",
+    "📱 Mobile Development",
+    "🔒 Cybersecurity",
+    "☁️ Cloud & DevOps",
+    "🤷 Still building skills",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Marketing - Area
+export const Q5_MARKETING_AREA: QuestionData = {
+  question: "Marketing has gone digital! Which area?",
+  options: [
+    "📱 Digital & Social Media Marketing",
+    "💰 Performance Marketing",
+    "✍️ Content & Brand Marketing",
+    "📊 Marketing Analytics",
+    "🎯 All round marketing",
+  ],
+  isFreeText: false,
+};
+
+// Q4: Other field - Main goal
+export const Q4_OTHER_GOAL: QuestionData = {
+  question: "What's your main goal right now?",
+  options: [
+    "💼 Get a good job",
+    "🚀 Start my own business",
+    "💻 Learn new skills",
+    "🔄 Change my career path",
+    "🤷 Still figuring out",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Other field - Interest area
+export const Q5_OTHER_INTEREST: QuestionData = {
+  question: "Which area interests you most?",
+  options: [
+    "💻 Technology & Digital Skills",
+    "📢 Marketing & Communication",
+    "🎨 Design & Creative",
+    "📊 Data & Analytics",
+    "✍️ Content & Writing",
+    "🤷 Help me decide",
+  ],
+  isFreeText: false,
+};
+
+// Q6: Other field - Skill level
+export const Q6_OTHER_SKILL_LEVEL: QuestionData = {
+  question: "What's your current skill level in your chosen area?",
+  options: [
+    "❌ Complete beginner",
+    "📖 Know some basics",
+    "✅ Intermediate level",
+    "🔥 Advanced, want to go further",
+  ],
+  isFreeText: false,
+};
+
+// Q7: Other field - Challenge
+export const Q7_OTHER_CHALLENGE: QuestionData = {
+  question: "What's your biggest challenge when it comes to learning?",
+  options: [
+    "😰 Don't know where to start",
+    "⏰ Can't stay consistent",
+    "🤯 Too much info everywhere",
+    "😔 Tried before but gave up",
+    "💪 None, I'm ready!",
+  ],
+  isFreeText: false,
+};
+
+// SECOND TO LAST QUESTION: Biggest challenge
+export const Q_CHALLENGE: QuestionData = {
+  question: "One last thing — what's your biggest challenge when it comes to learning?",
+  options: [
+    "😰 Don't know where to start",
+    "⏰ Can't stay consistent",
+    "💸 Worried about cost",
+    "🤯 Too much information everywhere",
+    "😔 Tried before but gave up",
+    "💪 None, I'm ready to go!",
+  ],
+  isFreeText: false,
+};
+
+// LAST QUESTION: Specific skills (free text)
+export const Q_SPECIFIC_SKILLS: QuestionData = {
+  question: "Any specific skills you want to make sure are included in your roadmap?",
+  options: ["Skip, build my roadmap →"],
+  isFreeText: true,
+};
+
+// Function to get next question based on conversation history
+export function getNextQuestion(history: AnswerHistory[]): QuestionData | null {
+  if (history.length === 0) {
+    return WELCOME_SCREEN;
+  }
+
+  const lastAnswer = history[history.length - 1].answer;
+  const answers = history.map(h => h.answer);
+
+  // After welcome, show Q1 (qualification)
+  if (history.length === 1 && history[0].question === WELCOME_SCREEN.question) {
+    return Q1_QUALIFICATION;
+  }
+
+  // Q1 answered - show Q2 based on qualification
+  if (history.length === 2) {
+    const q1 = answers[1].toLowerCase();
+    if (q1.includes("school") || q1.includes("12th")) {
+      return Q2_STREAM;
+    } else if (q1.includes("college")) {
+      return Q2_COLLEGE;
+    } else if (q1.includes("graduation")) {
+      return Q2_GRADUATION;
+    } else if (q1.includes("working")) {
+      return Q2_WORKING;
+    } else if (q1.includes("career change")) {
+      return Q2_CAREER_CHANGE;
+    }
+  }
+
+  // Q2 answered - show Q3 based on stream/college/working
+  if (history.length === 3) {
+    const q1 = answers[1].toLowerCase();
+    const q2 = answers[2].toLowerCase();
+
+    if (q1.includes("school") || q1.includes("12th")) {
+      if (q2.includes("science")) return Q3_SCIENCE_SUBJECTS;
+      if (q2.includes("commerce")) return Q3_COMMERCE_SUBJECTS;
+      if (q2.includes("arts")) return Q3_ARTS_SUBJECTS;
+    } else if (q1.includes("college")) {
+      if (q2.includes("engineering")) return Q3_ENGINEERING_BRANCH;
+      if (q2.includes("bba") || q2.includes("bcom")) return Q3_BUSINESS_AREA;
+      if (q2.includes("design")) return Q3_DESIGN_STREAM;
+      if (q2.includes("other")) return Q3_OTHER_FIELD;
+    } else if (q1.includes("graduation")) {
+      if (q2.includes("engineering")) return Q4_ENGINEERING_NOW;
+      if (q2.includes("business")) return Q4_BUSINESS_NEXT;
+      if (q2.includes("other")) return Q3_OTHER_FIELD;
+    } else if (q1.includes("working")) {
+      if (q2.includes("it/technology")) return Q3_TECH_DURATION;
+      if (q2.includes("finance")) return Q3_FINANCE_GOAL;
+      if (!q2.includes("it") && !q2.includes("finance")) return Q3_MOVE_INTO;
+      if (q2.includes("other")) return Q3_OTHER_FIELD;
+    } else if (q1.includes("career change")) {
+      return Q3_CAREER_DIRECTION;
+    }
+  }
+
+  // Q3 answered - show Q4 based on subjects/branch
+  if (history.length === 4) {
+    const q1 = answers[1].toLowerCase();
+    const q2 = answers[2].toLowerCase();
+    const q3 = answers[3].toLowerCase();
+
+    // Handle "Other" field path
+    if (q3.includes("other") || q3.includes("something else")) {
+      return Q4_OTHER_GOAL;
+    }
+
+    if (q1.includes("school") || q1.includes("12th")) {
+      if (q2.includes("science")) {
+        if (q3.includes("pcm")) return Q4_PCM_PLAN;
+        if (q3.includes("pcb")) return Q4_PCB_DIRECTION;
+        if (q3.includes("pcmb")) return Q4_PCMB_PULL;
+        if (q3.includes("cs") || q3.includes("it")) return Q4_CS_BUILD;
+      } else if (q2.includes("commerce")) {
+        if (q3.includes("math")) return Q4_COMMERCE_MATHS_DIRECTION;
+        if (q3.includes("without")) return Q4_COMMERCE_NO_MATHS;
+      } else if (q2.includes("arts")) {
+        if (q3.includes("journalism")) return Q4_JOURNALISM;
+        if (q3.includes("fine arts")) return Q4_FINE_ARTS;
+        if (q3.includes("psychology")) return Q4_PSYCHOLOGY;
+        if (q3.includes("english")) return Q4_ENGLISH;
+      }
+    } else if (q1.includes("college")) {
+      if (q2.includes("engineering")) {
+        if (q3.includes("cs") || q3.includes("it")) return Q4_CS_ENGINEERING_FOCUS;
+        return Q4_NON_CS_ENGINEERING_GOAL;
+      }
+      if (q2.includes("bca") || q2.includes("bsc")) return Q4_BCA_FOCUS;
+    } else if (q1.includes("graduation")) {
+      if (q2.includes("engineering")) return Q4_ENGINEERING_NOW;
+      if (q2.includes("business")) return Q4_BUSINESS_NEXT;
+    } else if (q1.includes("working")) {
+      if (q2.includes("it")) return Q4_IT_GOAL;
+    }
+  }
+
+  // Q4 answered - show Q5 for specific paths
+  if (history.length === 5) {
+    const q1 = answers[1].toLowerCase();
+    const q2 = answers[2].toLowerCase();
+    const q3 = answers[3].toLowerCase();
+    const q4 = answers[4].toLowerCase();
+
+    // Handle "Other" field path - Q4_OTHER_GOAL answered
+    if (q4.includes("goal") || q4.includes("job") || q4.includes("business") || q4.includes("learn") || q4.includes("change")) {
+      return Q5_OTHER_INTEREST;
+    }
+
+    if (q1.includes("school") || q1.includes("12th")) {
+      if (q2.includes("science")) {
+        if (q3.includes("pcm")) {
+          if (q4.includes("engineering")) return Q5_ENGINEERING_FIELD;
+          if (q4.includes("software")) return Q5_SOFTWARE_AREA;
+          if (q4.includes("data")) return Q5_DATA_FIELD;
+        }
+        if (q3.includes("pcb")) {
+          if (q4.includes("health tech")) return Q5_HEALTH_TECH_AREA;
+          if (q4.includes("medical")) return Q5_MEDICAL_NEET;
+        }
+      } else if (q2.includes("commerce")) {
+        if (q3.includes("math")) {
+          if (q4.includes("fintech")) return Q5_FINTECH_AREA;
+          if (q4.includes("stock")) return Q5_STOCK_MARKET_GOAL;
+        }
+        if (q3.includes("without") && q4.includes("digital marketing")) return Q5_DIGITAL_MARKETING_AREA;
+      }
+    } else if (q1.includes("college")) {
+      if (q2.includes("engineering") && q3.includes("cs") && q4.includes("placed")) {
+        return Q5_CS_COMPANY_TYPE;
+      }
+    }
+  }
+
+  // Q5 answered - show Q6 for "Other" path or challenge for other paths
+  if (history.length === 6) {
+    const q4 = answers[4].toLowerCase();
+    const q5 = answers[5].toLowerCase();
+
+    // Handle "Other" field path - Q5_OTHER_INTEREST answered
+    if (q5.includes("technology") || q5.includes("marketing") || q5.includes("design") || q5.includes("data") || q5.includes("content") || q5.includes("help")) {
+      return Q6_OTHER_SKILL_LEVEL;
+    }
+  }
+
+  // Q6 answered - show Q7 for "Other" path
+  if (history.length === 7) {
+    const q6 = answers[6].toLowerCase();
+
+    // Handle "Other" field path - Q6_OTHER_SKILL_LEVEL answered
+    if (q6.includes("beginner") || q6.includes("basics") || q6.includes("intermediate") || q6.includes("advanced")) {
+      return Q7_OTHER_CHALLENGE;
+    }
+  }
+
+  // Q7 answered - show challenge question if not already shown
+  if (history.length >= 6) {
+    const lastQuestion = history[history.length - 1].question;
+    if (lastQuestion !== Q_CHALLENGE.question && lastQuestion !== Q_SPECIFIC_SKILLS.question && lastQuestion !== Q7_OTHER_CHALLENGE.question) {
+      return Q_CHALLENGE;
+    }
+    if (lastQuestion === Q_CHALLENGE.question || lastQuestion === Q7_OTHER_CHALLENGE.question) {
+      return Q_SPECIFIC_SKILLS;
+    }
+  }
+
+  // Assessment complete
+  return null;
+}
+
+// Skill mapping based on conversation history
+export function mapSkillsFromConversation(history: AnswerHistory[]): string[] {
+  const answers = history.map(h => h.answer).join(" ").toLowerCase();
+  const allAnswers = history.map(h => h.answer);
+
+  // PCM + Engineering + CS
+  if (answers.includes("pcm") && answers.includes("engineering") && answers.includes("computer science")) {
+    return ["Python", "Data Structures", "Web Development", "System Design", "Git & GitHub", "Interview Prep"];
+  }
+
+  // PCM + Data Science
+  if (answers.includes("pcm") && answers.includes("data")) {
+    return ["Python", "Statistics & Maths", "Pandas & NumPy", "Data Visualization", "Machine Learning", "SQL"];
+  }
+
+  // PCB + Health Tech
+  if (answers.includes("pcb") && answers.includes("health tech")) {
+    return ["Python Basics", "Bioinformatics Basics", "Healthcare Data", "Excel for Healthcare", "Medical Terminology", "Research Methods"];
+  }
+
+  // PCB + Medical
+  if (answers.includes("pcb") && answers.includes("medical")) {
+    return ["Biology Advanced", "Chemistry Advanced", "Physics for NEET", "NEET Mock Tests", "Medical Terminology", "Study Techniques"];
+  }
+
+  // Commerce + Maths + CA
+  if (answers.includes("commerce") && answers.includes("math") && answers.includes("ca")) {
+    return ["Accounting Principles", "Taxation Basics", "Financial Statements", "Tally/Excel", "Business Laws", "CA Foundation Prep"];
+  }
+
+  // Commerce + Maths + Stock Market
+  if (answers.includes("commerce") && answers.includes("math") && answers.includes("stock")) {
+    return ["Stock Market Basics", "Technical Analysis", "Fundamental Analysis", "Excel for Finance", "Trading Psychology", "Portfolio Management"];
+  }
+
+  // Commerce + No Maths + Digital Marketing
+  if (answers.includes("commerce") && answers.includes("without") && answers.includes("digital marketing")) {
+    return ["Social Media Marketing", "Content Creation", "SEO Basics", "Google Analytics", "Canva", "Email Marketing"];
+  }
+
+  // Arts + Journalism
+  if (answers.includes("arts") && answers.includes("journalism")) {
+    return ["Writing Skills", "Journalism Ethics", "Digital Reporting", "Social Media for Journalists", "Video Journalism", "SEO for Content"];
+  }
+
+  // Arts + Fine Arts + UI/UX
+  if (answers.includes("arts") && answers.includes("fine arts") && answers.includes("ui/ux")) {
+    return ["Design Principles", "Canva", "Figma", "UI Design", "UX Research", "Portfolio Building"];
+  }
+
+  // Arts + Psychology + User Research
+  if (answers.includes("arts") && answers.includes("psychology") && answers.includes("user research")) {
+    return ["User Research Methods", "Usability Testing", "Survey Design", "Data Analysis Basics", "Figma Basics", "UX Writing"];
+  }
+
+  // Engineering CS + Get Placed
+  if (answers.includes("engineering") && answers.includes("computer science") && answers.includes("placed")) {
+    return ["DSA", "System Design", "Web Development", "Python/Java", "Git", "Interview Preparation", "Mock Interviews", "Resume Building"];
+  }
+
+  // Engineering Non-CS + Switch to Tech
+  if (answers.includes("engineering") && answers.includes("switch") && answers.includes("tech")) {
+    return ["Programming Basics", "Python", "Web Development Basics", "Data Science Intro", "Git", "One Specialization of choice"];
+  }
+
+  // BBA + Digital Marketing
+  if (answers.includes("bba") && answers.includes("digital marketing")) {
+    return ["Social Media Strategy", "Content Creation", "SEO", "Performance Marketing", "Analytics", "Brand Management"];
+  }
+
+  // Working Professional IT + AI/ML
+  if (answers.includes("working") && answers.includes("it") && answers.includes("ai") || answers.includes("ml")) {
+    return ["Python Advanced", "Machine Learning", "Deep Learning", "NLP", "MLOps", "AI Project Building"];
+  }
+
+  // Working Professional + Career Change to Tech
+  if (answers.includes("working") && answers.includes("career change") && answers.includes("tech")) {
+    return ["Programming Fundamentals", "Web Development", "Python", "One Specialization", "Portfolio Projects", "Interview Prep"];
+  }
+
+  // Homemaker + Restart Career
+  if (answers.includes("homemaker") || answers.includes("restart")) {
+    return ["Digital Skills Basics", "MS Office/Excel", "Digital Marketing", "Content Creation", "Freelancing Skills", "Communication Skills"];
+  }
+
+  // Default fallback - map based on final direction
+  if (answers.includes("web development")) return ["HTML/CSS", "JavaScript", "React", "Node.js", "Git", "Deployment"];
+  if (answers.includes("data science")) return ["Python", "Statistics", "Pandas", "Machine Learning", "SQL", "Data Visualization"];
+  if (answers.includes("mobile")) return ["Flutter", "Dart", "Mobile UI", "API Integration", "State Management", "App Deployment"];
+  if (answers.includes("design")) return ["Figma", "Design Principles", "UI Design", "UX Research", "Prototyping", "Portfolio Building"];
+  if (answers.includes("marketing")) return ["Social Media Marketing", "SEO", "Content Creation", "Google Analytics", "Email Marketing", "Brand Strategy"];
+  if (answers.includes("finance")) return ["Excel", "Financial Analysis", "Accounting", "Taxation", "Investment Basics", "Fintech"];
+  if (answers.includes("cybersecurity")) return ["Network Security", "Ethical Hacking", "Web Security", "Cryptography", "Security Tools", "Compliance"];
+
+  // Ultimate fallback
+  return ["Python", "Web Development Basics", "Data Science Intro", "Communication Skills", "Problem Solving", "Project Building"];
+}

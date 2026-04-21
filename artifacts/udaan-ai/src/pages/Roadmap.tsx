@@ -20,6 +20,20 @@ const mockProgressData = [
   { week: "W8", progress: 85 },
 ];
 
+function formatDuration(timePerDayMinutes: number): string {
+  if (timePerDayMinutes <= 30) return "20-24 weeks";
+  if (timePerDayMinutes <= 60) return "12-16 weeks";
+  if (timePerDayMinutes <= 120) return "8-10 weeks";
+  return "4-6 weeks";
+}
+
+function estimatePhases(timePerDayMinutes: number): number {
+  if (timePerDayMinutes <= 30) return 8;
+  if (timePerDayMinutes <= 60) return 6;
+  if (timePerDayMinutes <= 120) return 5;
+  return 4;
+}
+
 export default function Roadmap() {
   const [, setLocation] = useLocation();
   const student = getStoredStudent();

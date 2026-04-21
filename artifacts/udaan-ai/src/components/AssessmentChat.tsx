@@ -4,249 +4,95 @@ import { StarField } from "@/components/StarField";
 import { getStoredStudent } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { setAssessmentSnapshot, type AssessmentDraft, type ChatMessage } from "@/lib/assessment-draft";
+import {
+  getNextQuestion,
+  mapSkillsFromConversation,
+  type QuestionData,
+  type AnswerHistory,
+  type QuestionStep,
+} from "@/lib/assessment-questions";
 import logoPath from "/logo.png";
 
-type Answer = string;
-type QuestionStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | "complete";
-
-interface QuestionData {
-  question: string;
-  options: string[];
-  isFreeText: boolean;
-}
-
-// Q1: Fixed goal question
-const Q1: QuestionData = {
-  question: "What's your main goal right now?",
-  options: ["Get a Job", "Freelancing", "Start a Business", "Upskilling"],
-  isFreeText: false,
-};
-
-// Q2: Depends on Q1 answer
-function getQ2(q1Answer: string): QuestionData {
-  if (q1Answer === "Get a Job") {
-    return {
-      question: "What kind of role are you targeting?",
-      options: ["Software Developer", "Data Analyst", "UI/UX Designer", "Digital Marketer", "Other"],
-      isFreeText: false,
-    };
-  } else if (q1Answer === "Freelancing") {
-    return {
-      question: "What service do you want to offer?",
-      options: ["Web Development", "Graphic Design", "Content Writing", "Video Editing", "Other"],
-      isFreeText: false,
-    };
-  } else if (q1Answer === "Start a Business") {
-    return {
-      question: "What kind of business are you thinking about?",
-      options: ["Tech Startup", "E-commerce", "Service Business", "Content/Media", "Not sure yet"],
-      isFreeText: false,
-    };
-  } else {
-    // Upskilling
-    return {
-      question: "What area do you want to grow in?",
-      options: ["Tech & Coding", "Soft Skills", "Business Skills", "Design & Creative", "AI & Data Science"],
-      isFreeText: false,
-    };
-  }
-}
-
-// Q3: Depends on Q1 + Q2 answers
-function getQ3(q1Answer: string, q2Answer: string): QuestionData {
-  // Job paths
-  if (q1Answer === "Get a Job") {
-    if (q2Answer === "Software Developer") {
-      return {
-        question: "Which tech area interests you?",
-        options: ["Web Development", "Mobile Apps", "AI/ML", "Backend", "Full Stack"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Data Analyst") {
-      return {
-        question: "Which tool do you want to master?",
-        options: ["Excel & SQL", "Python", "Power BI", "Tableau", "All of them"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "UI/UX Designer") {
-      return {
-        question: "Which design tool do you prefer?",
-        options: ["Figma", "Adobe XD", "Sketch", "Just starting out"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Digital Marketer") {
-      return {
-        question: "Which area of marketing?",
-        options: ["Social Media", "SEO", "Paid Ads", "Content Marketing", "Email Marketing"],
-        isFreeText: false,
-      };
-    }
-  }
-  // Freelancing paths
-  else if (q1Answer === "Freelancing") {
-    if (q2Answer === "Web Development") {
-      return {
-        question: "What type of websites do you want to build?",
-        options: ["Business Websites", "E-commerce", "Web Apps", "Landing Pages"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Graphic Design") {
-      return {
-        question: "What design work interests you?",
-        options: ["Logo & Branding", "Social Media Posts", "UI Design", "Print Design"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Content Writing") {
-      return {
-        question: "What type of content?",
-        options: ["Blogs & Articles", "Copywriting", "Social Media", "Technical Writing"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Video Editing") {
-      return {
-        question: "What kind of videos?",
-        options: ["YouTube Videos", "Reels & Shorts", "Corporate Videos", "Ads & Promos"],
-        isFreeText: false,
-      };
-    }
-  }
-  // Business paths
-  else if (q1Answer === "Start a Business") {
-    if (q2Answer === "Tech Startup") {
-      return {
-        question: "What kind of tech product?",
-        options: ["Mobile App", "Web Platform", "AI Tool", "SaaS Product"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "E-commerce") {
-      return {
-        question: "What do you want to sell?",
-        options: ["Physical Products", "Digital Products", "Dropshipping", "Handmade Items"],
-        isFreeText: false,
-      };
-    }
-  }
-  // Upskilling paths
-  else if (q1Answer === "Upskilling") {
-    if (q2Answer === "Tech & Coding") {
-      return {
-        question: "Which skill do you want to master?",
-        options: ["Python", "Web Dev", "AI & ML", "App Development", "Data Science"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Soft Skills") {
-      return {
-        question: "Which soft skill?",
-        options: ["Communication", "Leadership", "Public Speaking", "Time Management", "Problem Solving"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Business Skills") {
-      return {
-        question: "Which business skill?",
-        options: ["Finance & Accounting", "Marketing", "Sales", "Entrepreneurship", "Management"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "Design & Creative") {
-      return {
-        question: "Which design skill?",
-        options: ["UI/UX Design", "Graphic Design", "Video Editing", "Photography", "Animation"],
-        isFreeText: false,
-      };
-    } else if (q2Answer === "AI & Data Science") {
-      return {
-        question: "Which AI skill?",
-        options: ["Machine Learning", "Data Analysis", "ChatGPT & AI Tools", "Computer Vision", "NLP"],
-        isFreeText: false,
-      };
-    }
-  }
-
-  // Fallback for "Other" options
-  return {
-    question: "Tell me more about what you want to achieve",
-    options: ["I'll explain in detail"],
-    isFreeText: true,
-  };
-}
-
-// Q4: Previous learning experience
-const Q4: QuestionData = {
-  question: "Have you tried learning this before?",
-  options: ["Never started", "Tried but gave up", "Done some tutorials", "Have basic knowledge"],
-  isFreeText: false,
-};
-
-// Q5: Biggest challenge
-const Q5: QuestionData = {
-  question: "What's your biggest challenge in learning?",
-  options: ["No proper guidance", "Lack of motivation", "Too much theory no practice", "Don't know where to start", "No time management"],
-  isFreeText: false,
-};
-
-// Q6: Daily time
-const Q6: QuestionData = {
-  question: "How much time can you give daily?",
-  options: ["30 Minutes", "1 Hour", "2 Hours", "3+ Hours"],
-  isFreeText: false,
-};
-
-// Q7: Extra skills
-const Q7: QuestionData = {
-  question: "Any specific skills you want to add?",
-  options: [],
-  isFreeText: true,
-};
-
-function parseTimeToMinutes(timeString: string): number {
-  if (!timeString) return 60;
-  const lower = timeString.toLowerCase();
-  if (lower.includes("30 minutes")) return 30;
-  if (lower.includes("1 hour")) return 60;
-  if (lower.includes("2 hours")) return 120;
-  if (lower.includes("3+ hours") || lower.includes("3 hours")) return 180;
-  return 60;
-}
-
-// Goal-based skill filter mapping
-const ALL_SKILLS = [
-  { icon: "🐍", name: "Python", description: "The most beginner friendly programming language. Used in AI, data science, automation and web development. One of the highest paying skills in tech." },
-  { icon: "🌐", name: "Web Development", description: "Build websites and web apps from scratch. Combines HTML, CSS and JavaScript. High demand skill for jobs and freelancing." },
-  { icon: "🤖", name: "AI/ML", description: "Teach computers to think and learn. Used in ChatGPT, recommendation systems, self driving cars. The hottest field in tech right now." },
-  { icon: "📊", name: "Data Science", description: "Extract insights from data to help businesses make decisions. Combines statistics, programming and visualization." },
-  { icon: "🎨", name: "UI/UX Design", description: "Design beautiful and easy to use digital products. Bridge between users and technology. High demand in both jobs and freelancing." },
-  { icon: "📱", name: "App Development", description: "Build apps for Android and iOS. Used by billions of people daily. Great for jobs, freelancing and your own startup." },
-  { icon: "✏️", name: "Graphic Design", description: "Create visual content for brands, social media and marketing. Creative skill with high freelancing demand." },
-  { icon: "📢", name: "Digital Marketing", description: "Promote businesses online through social media, SEO and ads. Every business needs this skill today." },
-  { icon: "💬", name: "Soft Skills - Communication", description: "The ability to express ideas clearly and confidently. Most in-demand skill by every employer globally." },
-  { icon: "👥", name: "Soft Skills - Leadership", description: "Inspire and guide teams to achieve goals. Essential for career growth and entrepreneurship." },
-  { icon: "🎤", name: "Public Speaking", description: "Present ideas confidently in front of any audience. Transforms your career and personal brand." },
-  { icon: "🔒", name: "Cybersecurity", description: "Protect systems and data from hackers and threats. One of the fastest growing and highest paying fields in tech." },
-  { icon: "📈", name: "Excel & Data Analysis", description: "Master spreadsheets and data tools used by every business. Quick to learn, immediately useful." },
-];
-
-function getSkillsForGoal(goal: string): typeof ALL_SKILLS {
-  const goalLower = goal.toLowerCase();
+// Skill descriptions mapping
+function getSkillDescription(skill: string): string {
+  const skillLower = skill.toLowerCase();
   
-  if (goalLower.includes("get a job")) {
-    return ALL_SKILLS.filter(skill => 
-      ["Python", "Web Development", "Data Science", "Soft Skills - Communication", "Soft Skills - Leadership", "Cybersecurity"].includes(skill.name)
-    );
-  }
+  if (skillLower.includes("python")) return "The most beginner friendly programming language. Used in AI, data science and automation.";
+  if (skillLower.includes("data structures")) return "The foundation of programming. Essential for coding interviews and efficient code.";
+  if (skillLower.includes("web development")) return "Build websites and web applications. Most in-demand tech skill globally.";
+  if (skillLower.includes("system design")) return "Design large-scale systems. Required for senior engineering roles at big tech companies.";
+  if (skillLower.includes("git")) return "Track and manage your code changes professionally. Used by every developer in the world.";
+  if (skillLower.includes("interview prep")) return "Prepare for technical interviews with practice problems and mock interviews.";
+  if (skillLower.includes("statistics")) return "The mathematical foundation of data science and AI. Essential for understanding how ML models work.";
+  if (skillLower.includes("pandas") || skillLower.includes("numpy")) return "Python libraries for data manipulation and analysis. Core tools for data science.";
+  if (skillLower.includes("data visualization")) return "Turn complex data into clear charts and graphs. Critical for communicating insights.";
+  if (skillLower.includes("machine learning")) return "Teach computers to learn from data. Powers ChatGPT, Netflix recommendations and self driving cars.";
+  if (skillLower.includes("sql")) return "Query and manage databases used by every company. Essential skill for data and backend roles.";
+  if (skillLower.includes("bioinformatics")) return "Combine biology and computer science. Analyze biological data using computational methods.";
+  if (skillLower.includes("healthcare data")) return "Work with medical data and health records. Growing field with high demand.";
+  if (skillLower.includes("excel")) return "Master the world's most used data tool. Every business runs on Excel and spreadsheets.";
+  if (skillLower.includes("medical terminology")) return "Understand medical language and terminology. Essential for healthcare careers.";
+  if (skillLower.includes("research methods")) return "Learn scientific research methodology. Critical for academic and research careers.";
+  if (skillLower.includes("biology advanced")) return "Advanced biology concepts for medical and biotech careers.";
+  if (skillLower.includes("chemistry advanced")) return "Advanced chemistry for medical and NEET preparation.";
+  if (skillLower.includes("physics for neet")) return "Physics concepts specifically for NEET medical entrance exam.";
+  if (skillLower.includes("neet mock tests")) return "Practice tests for NEET medical entrance exam preparation.";
+  if (skillLower.includes("study techniques")) return "Effective study methods and exam preparation strategies.";
+  if (skillLower.includes("accounting")) return "Financial accounting principles. Foundation for finance and business careers.";
+  if (skillLower.includes("taxation")) return "Understand tax laws and compliance. Essential for accounting and finance roles.";
+  if (skillLower.includes("financial statements")) return "Analyze company financial reports. Core skill for finance professionals.";
+  if (skillLower.includes("tally")) return "Popular accounting software used by small businesses in India.";
+  if (skillLower.includes("business laws")) return "Legal framework for businesses. Important for entrepreneurs and managers.";
+  if (skillLower.includes("ca foundation")) return "Prepare for Chartered Accountancy foundation exam.";
+  if (skillLower.includes("stock market")) return "Understand how stock markets work. Foundation for investing and trading careers.";
+  if (skillLower.includes("technical analysis")) return "Analyze stock price patterns and trends. Used by traders and investors.";
+  if (skillLower.includes("fundamental analysis")) return "Evaluate company financials to make investment decisions.";
+  if (skillLower.includes("trading psychology")) return "Mindset and discipline required for successful trading.";
+  if (skillLower.includes("portfolio management")) return "Manage investment portfolios. Essential for wealth management careers.";
+  if (skillLower.includes("social media marketing")) return "Grow brands on social media platforms. Most in-demand marketing skill.";
+  if (skillLower.includes("content creation")) return "Create engaging content for social media and marketing.";
+  if (skillLower.includes("seo")) return "Get websites to rank on Google without paying for ads. Long term free traffic.";
+  if (skillLower.includes("google analytics")) return "Track and analyze website traffic. Essential for digital marketing.";
+  if (skillLower.includes("canva")) return "Create professional graphics without design experience. Most popular design tool.";
+  if (skillLower.includes("email marketing")) return "Build and nurture email lists. Best ROI marketing channel.";
+  if (skillLower.includes("writing")) return "Professional writing skills for content, copywriting and journalism.";
+  if (skillLower.includes("journalism ethics")) return "Ethical standards for journalism and media reporting.";
+  if (skillLower.includes("digital reporting")) return "Modern digital journalism techniques and tools.";
+  if (skillLower.includes("video journalism")) return "Video reporting and storytelling for digital platforms.";
+  if (skillLower.includes("seo for content")) return "Optimize content for search engines. Critical for content visibility.";
+  if (skillLower.includes("design principles")) return "Fundamental design principles. Foundation for any design career.";
+  if (skillLower.includes("figma")) return "Industry standard tool for UI/UX design. Used by top tech companies.";
+  if (skillLower.includes("ui design")) return "Design user interfaces for apps and websites. Core UI/UX skill.";
+  if (skillLower.includes("ux research")) return "Understand user needs and behaviors. Critical for product design.";
+  if (skillLower.includes("portfolio building")) return "Create professional portfolios to showcase your work.";
+  if (skillLower.includes("user research methods")) return "Methods for researching user needs and behaviors.";
+  if (skillLower.includes("usability testing")) return "Test how users interact with products. Essential for UX design.";
+  if (skillLower.includes("survey design")) return "Create effective surveys for research and feedback.";
+  if (skillLower.includes("data analysis basics")) return "Basic data analysis skills for research and decision making.";
+  if (skillLower.includes("ux writing")) return "Writing for user interfaces and user experience.";
+  if (skillLower.includes("dsa")) return "Data Structures and Algorithms. Essential for coding interviews.";
+  if (skillLower.includes("java") || skillLower.includes("python")) return "Popular programming languages used in tech companies.";
+  if (skillLower.includes("programming basics")) return "Foundation of programming. Learn to think like a developer.";
+  if (skillLower.includes("data science intro")) return "Introduction to data science concepts and tools.";
+  if (skillLower.includes("specialization")) return "Choose a specialized field to master for career growth.";
+  if (skillLower.includes("portfolio projects")) return "Build real projects to showcase your skills to employers.";
+  if (skillLower.includes("social media strategy")) return "Strategic planning for social media marketing and growth.";
+  if (skillLower.includes("performance marketing")) return "Paid advertising on social media and search engines.";
+  if (skillLower.includes("analytics")) return "Marketing analytics and measurement. Track campaign performance.";
+  if (skillLower.includes("brand management")) return "Build and manage brand identity and reputation.";
+  if (skillLower.includes("python advanced")) return "Advanced Python concepts for professional development.";
+  if (skillLower.includes("deep learning")) return "Neural networks and advanced AI techniques.";
+  if (skillLower.includes("nlp")) return "Natural Language Processing for AI applications.";
+  if (skillLower.includes("mlops")) return "Machine Learning Operations. Deploy and manage ML models in production.";
+  if (skillLower.includes("ai project building")) return "Build real AI projects to demonstrate your skills.";
+  if (skillLower.includes("digital skills basics")) return "Foundation digital skills for modern careers.";
+  if (skillLower.includes("ms office")) return "Microsoft Office suite for productivity and business.";
+  if (skillLower.includes("freelancing skills")) return "Skills needed to succeed as a freelancer.";
+  if (skillLower.includes("communication skills")) return "Professional communication for career success.";
+  if (skillLower.includes("problem solving")) return "Critical thinking and problem-solving techniques.";
+  if (skillLower.includes("project building")) return "Build real projects to demonstrate your skills.";
   
-  if (goalLower.includes("freelancing")) {
-    return ALL_SKILLS.filter(skill => 
-      ["Web Development", "Graphic Design", "Digital Marketing", "UI/UX Design", "App Development"].includes(skill.name)
-    );
-  }
-  
-  if (goalLower.includes("start a business")) {
-    return ALL_SKILLS.filter(skill => 
-      ["Digital Marketing", "Soft Skills - Leadership", "Public Speaking", "Graphic Design", "Web Development"].includes(skill.name)
-    );
-  }
-  
-  // Default: Upskilling or other - show all skills
-  return ALL_SKILLS;
+  return "Develop this skill to advance your career and achieve your goals.";
 }
 
 function normalizeDraft(raw: unknown): AssessmentDraft | null {
@@ -277,47 +123,54 @@ export function AssessmentChat() {
   const { toast } = useToast();
   const student = getStoredStudent();
 
-  const [step, setStep] = useState<QuestionStep>(1);
-  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [answerHistory, setAnswerHistory] = useState<AnswerHistory[]>([]);
   const [customAnswer, setCustomAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [animate, setAnimate] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
 
   if (!student) {
     setLocation("/signup");
     return null;
   }
 
-  // Get current question based on step and previous answers
-  function getCurrentQuestion(): QuestionData {
-    if (step === 1) return Q1;
-    if (step === 2) return getQ2(answers[0]);
-    if (step === 3) return getQ3(answers[0], answers[1]);
-    if (step === 4) return Q4;
-    if (step === 5) return Q5;
-    if (step === 6) return Q6;
-    if (step === 7) return Q7;
-    return Q7;
-  }
-
-  const currentQuestion = getCurrentQuestion();
+  const currentQuestion = getNextQuestion(answerHistory);
+  const isComplete = currentQuestion === null;
 
   function handleAnswer(answer: string) {
-    const newAnswers = [...answers, answer];
-    setAnswers(newAnswers);
+    const newHistory: AnswerHistory[] = [
+      ...answerHistory,
+      {
+        question: currentQuestion?.question || "",
+        answer,
+        questionIndex: answerHistory.length,
+      },
+    ];
+    setAnswerHistory(newHistory);
     setAnimate(true);
+    setSlideDirection("left");
 
     setTimeout(() => {
       setAnimate(false);
-      if (typeof step === "number" && step < 7) {
-        setStep((step + 1) as QuestionStep);
-      } else {
-        // All questions answered, show skills preview
-        const matchedSkills = getSkillsForGoal(newAnswers[0] || "").map(s => s.name);
+      const nextQ = getNextQuestion(newHistory);
+      if (nextQ === null) {
+        // Assessment complete, show skills preview
+        const matchedSkills = mapSkillsFromConversation(newHistory);
         setSelectedSkills(matchedSkills);
-        setStep("complete");
       }
+    }, 300);
+  }
+
+  function handleBack() {
+    if (answerHistory.length === 0) return;
+    const newHistory = answerHistory.slice(0, -1);
+    setAnswerHistory(newHistory);
+    setAnimate(true);
+    setSlideDirection("right");
+
+    setTimeout(() => {
+      setAnimate(false);
     }, 300);
   }
 
@@ -325,13 +178,18 @@ export function AssessmentChat() {
     handleAnswer("Skipped");
   }
 
-  async function generateRoadmap(finalAnswers: Answer[]) {
+  async function generateRoadmap(finalHistory: AnswerHistory[]) {
     setLoading(true);
     try {
+      const conversationHistory = finalHistory.map(h => ({
+        question: h.question,
+        answer: h.answer,
+      }));
+
       const res = await fetch("/api/assessment/extract-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationHistory: buildConversationHistory(finalAnswers) }),
+        body: JSON.stringify({ conversationHistory }),
       });
       if (!res.ok) throw new Error((await res.text()) || "API error");
       const data = await res.json();
@@ -341,17 +199,16 @@ export function AssessmentChat() {
       
       // Override extracted interests with the selected skills from the UI
       draft.profile.interests = [...selectedSkills];
-      const userExtra = finalAnswers[6] !== "Skipped" && finalAnswers[6] ? finalAnswers[6] : null;
-      if (userExtra && !draft.profile.interests.includes(userExtra)) {
-        draft.profile.interests.push(userExtra);
-      }
       
-      const messages: ChatMessage[] = buildConversationHistory(finalAnswers).map(h => ({
-        role: "assistant" as const,
-        content: h.question
-      })).flatMap((msg, i) => [
-        msg,
-        { role: "user" as const, content: finalAnswers[i] }
+      // Add any extra skills from the last free text answer
+      const lastAnswer = finalHistory[finalHistory.length - 1]?.answer;
+      if (lastAnswer && lastAnswer !== "Skipped" && !draft.profile.interests.includes(lastAnswer)) {
+        draft.profile.interests.push(lastAnswer);
+      }
+
+      const messages: ChatMessage[] = conversationHistory.flatMap((h, i) => [
+        { role: "assistant" as const, content: h.question },
+        { role: "user" as const, content: h.answer },
       ]);
       
       setAssessmentSnapshot({ messages, draft, updatedAt: Date.now() });
@@ -359,31 +216,32 @@ export function AssessmentChat() {
       setLocation("/assessment/confirm");
     } catch (error) {
       // Fallback to mock draft
-      const userExtra = finalAnswers[6] !== "Skipped" && finalAnswers[6] ? finalAnswers[6] : null;
       const mockInterests = [...selectedSkills];
-      if (userExtra && !mockInterests.includes(userExtra)) {
-        mockInterests.push(userExtra);
+      const lastAnswer = finalHistory[finalHistory.length - 1]?.answer;
+      if (lastAnswer && lastAnswer !== "Skipped" && !mockInterests.includes(lastAnswer)) {
+        mockInterests.push(lastAnswer);
       }
-      
+
       const mockDraft: AssessmentDraft = {
         hasEnoughInfo: true,
         profile: {
-          goal: finalAnswers[0] || "Get a Job",
-          field: finalAnswers[1] || "Tech",
+          goal: "Personalized Learning",
+          field: "Tech",
           skillLevel: "beginner",
-          timePerDayMinutes: parseTimeToMinutes(finalAnswers[5]) || 60,
+          timePerDayMinutes: 60,
           timelineWeeks: 12,
           extraSkills: [],
           interests: mockInterests
         },
         draftSummary: "Assessment completed"
       };
-      const messages: ChatMessage[] = buildConversationHistory(finalAnswers).map(h => ({
-        role: "assistant" as const,
-        content: h.question
-      })).flatMap((msg, i) => [
-        msg,
-        { role: "user" as const, content: finalAnswers[i] }
+      const conversationHistory = finalHistory.map(h => ({
+        question: h.question,
+        answer: h.answer,
+      }));
+      const messages: ChatMessage[] = conversationHistory.flatMap((h, i) => [
+        { role: "assistant" as const, content: h.question },
+        { role: "user" as const, content: h.answer },
       ]);
       setAssessmentSnapshot({ messages, draft: mockDraft, updatedAt: Date.now() });
       toast({ title: "Roadmap generated" });
@@ -393,23 +251,8 @@ export function AssessmentChat() {
     }
   }
 
-  function buildConversationHistory(ans: Answer[]): { question: string; answer: string }[] {
-    const history: { question: string; answer: string }[] = [];
-    if (ans[0]) history.push({ question: Q1.question, answer: ans[0] });
-    if (ans[1]) history.push({ question: getQ2(ans[0]).question, answer: ans[1] });
-    if (ans[2]) history.push({ question: getQ3(ans[0], ans[1]).question, answer: ans[2] });
-    if (ans[3]) history.push({ question: Q4.question, answer: ans[3] });
-    if (ans[4]) history.push({ question: Q5.question, answer: ans[4] });
-    if (ans[5]) history.push({ question: Q6.question, answer: ans[5] });
-    if (ans[6]) history.push({ question: Q7.question, answer: ans[6] });
-    return history;
-  }
-
   const pageBg = "linear-gradient(135deg, #050511 0%, #0d0d2b 60%, #050511 100%)";
   const cardBg = "rgba(13,10,40,0.85)";
-
-  // Get filtered skills based on user's goal
-  const filteredSkills = answers[0] ? getSkillsForGoal(answers[0]) : ALL_SKILLS;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0d0b1e", position: "relative", padding: "1.25rem" }}>
@@ -432,90 +275,82 @@ export function AssessmentChat() {
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.88rem" }}>Let's build your personalized learning path</p>
         </div>
 
-        {answers.length > 0 && (
+        {/* Previous Answers Summary Cards */}
+        {answerHistory.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem", marginBottom: "1rem" }}>
-            {answers.map((answer, i) => {
-              const q = i === 0 ? Q1 : i === 1 ? getQ2(answers[0]) : i === 2 ? getQ3(answers[0], answers[1]) : i === 3 ? Q4 : i === 4 ? Q5 : i === 5 ? Q6 : Q7;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr",
-                    gap: "0.35rem",
-                    background: "rgba(76,53,200,0.08)",
-                    border: "1px solid rgba(76,53,200,0.22)",
-                    borderRadius: "14px",
-                    padding: "0.65rem 0.75rem",
-                  }}
-                >
-                  <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontWeight: 700 }}>{q.question}</p>
-                  <p style={{ margin: 0, color: "#ddd6fe", fontSize: "0.88rem" }}>{answer}</p>
-                </div>
-              );
-            })}
+            {answerHistory.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr",
+                  gap: "0.35rem",
+                  background: "rgba(76,53,200,0.08)",
+                  border: "1px solid rgba(76,53,200,0.22)",
+                  borderRadius: "14px",
+                  padding: "0.65rem 0.75rem",
+                }}
+              >
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontWeight: 700 }}>{item.question}</p>
+                <p style={{ margin: 0, color: "#ddd6fe", fontSize: "0.88rem" }}>{item.answer}</p>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Skills Preview Screen */}
-        {step === "complete" && (
+        {isComplete && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "2rem" }}>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "white", marginBottom: "0.5rem" }}>Your Learning Path</h2>
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem" }}>Based on your goals, you'll be learning these skills</p>
             </div>
-            
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem", marginBottom: "2rem", maxHeight: "60vh", overflowY: "auto" }}>
-              {filteredSkills.map((skill) => {
-                const isSelected = selectedSkills.includes(skill.name);
-                return (
-                  <div
-                    key={skill.name}
-                    onClick={() => {
-                      setSelectedSkills(prev => 
-                        prev.includes(skill.name) 
-                          ? prev.filter(s => s !== skill.name)
-                          : [...prev, skill.name]
-                      );
-                    }}
-                    style={{
-                      background: isSelected ? "rgba(76,53,200,0.2)" : cardBg,
-                      border: isSelected ? "2px solid #9333ea" : "1px solid rgba(76,53,200,0.28)",
-                      borderRadius: "16px",
-                      padding: "1.25rem",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      position: "relative",
-                      opacity: isSelected ? 1 : 0.65,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "0 8px 24px rgba(76,53,200,0.2)";
-                      e.currentTarget.style.opacity = "1";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
-                      e.currentTarget.style.opacity = isSelected ? "1" : "0.65";
-                    }}
-                  >
-                    <div style={{ position: "absolute", top: "1rem", right: "1rem", width: "24px", height: "24px", borderRadius: "50%", border: isSelected ? "none" : "2px solid rgba(255,255,255,0.2)", background: isSelected ? "#9333ea" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {isSelected && <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>✓</span>}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                      <span style={{ fontSize: "2rem" }}>{skill.icon}</span>
-                      <h3 style={{ color: "white", fontSize: "1rem", fontWeight: 700, margin: 0, paddingRight: "1.5rem" }}>{skill.name}</h3>
-                    </div>
-                    <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", lineHeight: 1.5, margin: 0 }}>{skill.description}</p>
+              {selectedSkills.map((skill) => (
+                <div
+                  key={skill}
+                  onClick={() => {
+                    setSelectedSkills(prev =>
+                      prev.includes(skill)
+                        ? prev.filter(s => s !== skill)
+                        : [...prev, skill]
+                    );
+                  }}
+                  style={{
+                    background: "rgba(76,53,200,0.2)",
+                    border: "2px solid #9333ea",
+                    borderRadius: "16px",
+                    padding: "1.25rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    position: "relative",
+                    opacity: 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(76,53,200,0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ position: "absolute", top: "1rem", right: "1rem", width: "24px", height: "24px", borderRadius: "50%", background: "#9333ea", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>✓</span>
                   </div>
-                );
-              })}
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", paddingRight: "1.5rem" }}>
+                    <h3 style={{ color: "white", fontSize: "1rem", fontWeight: 700, margin: 0 }}>{skill}</h3>
+                  </div>
+                  <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", lineHeight: 1.5, margin: 0 }}>{getSkillDescription(skill)}</p>
+                </div>
+              ))}
             </div>
-            
+
             <button
               type="button"
               disabled={loading}
-              onClick={() => void generateRoadmap(answers)}
+              onClick={() => void generateRoadmap(answerHistory)}
               style={{
                 width: "100%",
                 padding: "1rem",
@@ -541,7 +376,7 @@ export function AssessmentChat() {
         )}
 
         {/* Question Card */}
-        {step !== "complete" && (
+        {!isComplete && currentQuestion && (
         <div
           style={{
             background: cardBg,
@@ -550,9 +385,43 @@ export function AssessmentChat() {
             padding: "1rem",
             boxShadow: "0 0 40px rgba(76,53,200,0.1)",
             opacity: animate ? 0.5 : 1,
-            transition: "opacity 0.3s ease",
+            transform: animate ? (slideDirection === "left" ? "translateX(-20px)" : "translateX(20px)") : "translateX(0)",
+            transition: "opacity 0.3s ease, transform 0.3s ease",
           }}
         >
+          {/* Back Button */}
+          {answerHistory.length > 0 && (
+            <button
+              type="button"
+              disabled={loading || animate}
+              onClick={handleBack}
+              style={{
+                padding: "0.5rem 0.75rem",
+                border: "1px solid rgba(76,53,200,0.45)",
+                borderRadius: "8px",
+                background: "transparent",
+                color: "rgba(255,255,255,0.7)",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                cursor: loading || animate ? "wait" : "pointer",
+                marginBottom: "1rem",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && !animate) {
+                  e.currentTarget.style.background = "rgba(76,53,200,0.2)";
+                  e.currentTarget.style.color = "white";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "rgba(255,255,255,0.7)";
+              }}
+            >
+              ← Back
+            </button>
+          )}
+
           <p style={{ color: "white", fontWeight: 800, fontSize: "1.02rem", lineHeight: 1.5, marginTop: 0 }}>{currentQuestion.question}</p>
 
           {!currentQuestion.isFreeText && (

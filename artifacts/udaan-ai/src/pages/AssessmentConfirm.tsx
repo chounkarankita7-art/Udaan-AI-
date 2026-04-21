@@ -12,20 +12,21 @@ import {
 } from "@/lib/assessment-draft";
 
 function formatDuration(profile: DraftProfile): string {
-  if (profile.timelineWeeks && profile.timelineWeeks > 0) {
-    return `${profile.timelineWeeks} weeks`;
-  }
-  if (!profile.skillLevel) return "8-12 months";
-  if (profile.skillLevel === "beginner") return "10-12 months";
-  if (profile.skillLevel === "intermediate") return "6-8 months";
-  return "4-6 months";
+  // Calculate duration based on daily time
+  const minutes = profile.timePerDayMinutes || 60;
+  if (minutes <= 30) return "20-24 weeks";
+  if (minutes <= 60) return "12-16 weeks";
+  if (minutes <= 120) return "8-10 weeks";
+  return "4-6 weeks";
 }
 
-function estimatePhases(draft: AssessmentDraft): number {
-  const skillCount = (draft.profile.interests?.length ?? 0) + (draft.profile.extraSkills?.length ?? 0);
-  if (skillCount >= 6) return 5;
-  if (skillCount >= 3) return 4;
-  return 3;
+function estimatePhases(profile: DraftProfile): number {
+  // Calculate phases based on daily time
+  const minutes = profile.timePerDayMinutes || 60;
+  if (minutes <= 30) return 8;
+  if (minutes <= 60) return 6;
+  if (minutes <= 120) return 5;
+  return 4;
 }
 
 function mergeDraftProfile(base: DraftProfile, patch: Record<string, unknown>): DraftProfile {
@@ -140,20 +141,72 @@ export default function AssessmentConfirm() {
       // Fallback to mock roadmap refinement if API is not available
       console.log("API not available, using mock roadmap refinement");
       
-      // Simple mock refinement logic
+      // Simple mock refinement logic with proper remove/add detection
       let updatedProfile = { ...currentDraft.profile };
-      let reply = "Updated your roadmap.";
+      let reply = "I've updated your roadmap based on your preferences.";
       
       const lowerMsg = msg.toLowerCase();
-      if (lowerMsg.includes("python")) {
-        updatedProfile.extraSkills = [...(updatedProfile.extraSkills || []), "Python"];
-        reply = "Added Python to your learning path!";
-      } else if (lowerMsg.includes("javascript") || lowerMsg.includes("js")) {
-        updatedProfile.extraSkills = [...(updatedProfile.extraSkills || []), "JavaScript"];
-        reply = "Added JavaScript to your learning path!";
-      } else if (lowerMsg.includes("react")) {
-        updatedProfile.extraSkills = [...(updatedProfile.extraSkills || []), "React"];
-        reply = "Added React to your learning path!";
+      const isRemove = lowerMsg.includes("remove") || lowerMsg.includes("delete") || lowerMsg.includes("don't want") || lowerMsg.includes("not interested in") || lowerMsg.includes("dont want");
+      const isAdd = lowerMsg.includes("add") || lowerMsg.includes("include") || lowerMsg.includes("also add") || lowerMsg.includes("want to learn");
+      
+      // Extract skill name from message
+      const skillMap: Record<string, string> = {
+        "python": "Python",
+        "javascript": "JavaScript",
+        "js": "JavaScript",
+        "react": "React",
+        "web development": "Web Development",
+        "web dev": "Web Development",
+        "data science": "Data Science",
+        "ai": "AI/ML",
+        "ml": "AI/ML",
+        "machine learning": "AI/ML",
+        "ui/ux": "UI/UX Design",
+        "graphic design": "Graphic Design",
+        "digital marketing": "Digital Marketing",
+        "app development": "App Development",
+        "mobile": "App Development",
+        "cybersecurity": "Cybersecurity",
+        "soft skills": "Soft Skills - Communication",
+        "communication": "Soft Skills - Communication",
+        "leadership": "Soft Skills - Leadership",
+        "public speaking": "Public Speaking",
+        "excel": "Excel & Data Analysis",
+      };
+      
+      let targetSkill: string | null = null;
+      for (const [key, value] of Object.entries(skillMap)) {
+        if (lowerMsg.includes(key)) {
+          targetSkill = value;
+          break;
+        }
+      }
+      
+      if (targetSkill) {
+        if (isRemove) {
+          // Remove skill from both interests and extraSkills
+          updatedProfile.interests = (updatedProfile.interests || []).filter(s => s !== targetSkill);
+          updatedProfile.extraSkills = (updatedProfile.extraSkills || []).filter(s => s !== targetSkill);
+          reply = `Removed ${targetSkill} from your learning path.`;
+        } else if (isAdd) {
+          // Add skill to interests if not already present
+          const allSkills = [...(updatedProfile.interests || []), ...(updatedProfile.extraSkills || [])];
+          if (!allSkills.includes(targetSkill)) {
+            updatedProfile.interests = [...(updatedProfile.interests || []), targetSkill];
+            reply = `Added ${targetSkill} to your learning path.`;
+          } else {
+            reply = `${targetSkill} is already in your learning path.`;
+          }
+        } else {
+          // Default to add if no explicit remove/add keyword but skill is mentioned
+          const allSkills = [...(updatedProfile.interests || []), ...(updatedProfile.extraSkills || [])];
+          if (!allSkills.includes(targetSkill)) {
+            updatedProfile.interests = [...(updatedProfile.interests || []), targetSkill];
+            reply = `Added ${targetSkill} to your learning path.`;
+          } else {
+            reply = `${targetSkill} is already in your learning path.`;
+          }
+        }
       } else if (lowerMsg.includes("timeline") || lowerMsg.includes("faster")) {
         updatedProfile.timelineWeeks = Math.max(4, (updatedProfile.timelineWeeks || 8) - 2);
         reply = "Shortened your learning timeline by 2 weeks!";
@@ -166,8 +219,6 @@ export default function AssessmentConfirm() {
       } else if (lowerMsg.includes("advanced")) {
         updatedProfile.skillLevel = "advanced";
         reply = "Set your skill level to advanced with challenging topics.";
-      } else {
-        reply = "I've updated your roadmap based on your preferences. You can continue to refine it or generate the final version.";
       }
       
       setDraft({
@@ -201,7 +252,7 @@ export default function AssessmentConfirm() {
         interests: currentDraft.profile.interests || [],
         extraSkills: currentDraft.profile.extraSkills || [],
         timelineWeeks: currentDraft.profile.timelineWeeks || 24,
-        phases: estimatePhases(currentDraft),
+        phases: estimatePhases(currentDraft.profile),
       });
       setStoredStudent({ ...currentStudent, assessmentCompleted: true });
       clearAssessmentSnapshot();
@@ -210,7 +261,7 @@ export default function AssessmentConfirm() {
     } catch (err: unknown) {
       // Fallback to mock roadmap confirmation if API is not available
       console.log("API not available, using mock roadmap confirmation");
-      
+
       setConfirmedRoadmapProfile({
         goal: currentDraft.profile.goal || "Get a Job",
         field: currentDraft.profile.field || "General Tech",
@@ -219,7 +270,7 @@ export default function AssessmentConfirm() {
         interests: currentDraft.profile.interests || [],
         extraSkills: currentDraft.profile.extraSkills || [],
         timelineWeeks: currentDraft.profile.timelineWeeks || 24,
-        phases: estimatePhases(currentDraft),
+        phases: estimatePhases(currentDraft.profile),
       });
       setStoredStudent({ ...currentStudent, assessmentCompleted: true });
       clearAssessmentSnapshot();
@@ -232,7 +283,7 @@ export default function AssessmentConfirm() {
 
   const pageBg = "linear-gradient(135deg, #0d0b1e 0%, #151030 60%, #0d0b1e 100%)";
   const cardBg = "rgba(13,11,30,0.92)";
-  const phases = estimatePhases(currentDraft);
+  const phases = estimatePhases(currentDraft.profile);
   const mainField = currentDraft.profile.field || currentDraft.profile.interests?.[0] || "General Tech";
 
   return (

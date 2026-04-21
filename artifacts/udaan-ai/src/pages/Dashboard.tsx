@@ -10,6 +10,20 @@ import {
 } from "recharts";
 import { getConfirmedRoadmapProfile } from "@/lib/assessment-draft";
 
+function formatDuration(timePerDayMinutes: number): string {
+  if (timePerDayMinutes <= 30) return "20-24 weeks";
+  if (timePerDayMinutes <= 60) return "12-16 weeks";
+  if (timePerDayMinutes <= 120) return "8-10 weeks";
+  return "4-6 weeks";
+}
+
+function estimatePhases(timePerDayMinutes: number): number {
+  if (timePerDayMinutes <= 30) return 8;
+  if (timePerDayMinutes <= 60) return 6;
+  if (timePerDayMinutes <= 120) return 5;
+  return 4;
+}
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const student = getStoredStudent();
@@ -45,13 +59,26 @@ export default function Dashboard() {
     );
   }
 
+  // Count the number of skills in user's roadmap for Courses Enrolled
+  const skillsCount = confirmedRoadmap 
+    ? Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).length
+    : dashboard?.coursesEnrolled || 0;
+
   const stats = [
-    { label: "Courses Enrolled", value: dashboard?.coursesEnrolled || 0, color: "#7c3aed" },
+    { label: "Courses Enrolled", value: skillsCount, color: "#7c3aed" },
     { label: "Completed", value: dashboard?.coursesCompleted || 0, color: "#10b981" },
     { label: "Day Streak", value: dashboard?.streak || 0, color: "#f59e0b" },
     { label: "Total Points", value: dashboard?.totalPoints || 0, color: "#06b6d4" },
     { label: "Certificates", value: dashboard?.certificates || 0, color: "#ec4899" },
   ];
+
+  // Generate skill distribution data from actual confirmed roadmap skills
+  const skillDistributionData = confirmedRoadmap 
+    ? Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).map(skill => ({
+        skill,
+        level: Math.floor(Math.random() * 40) + 60, // Random level between 60-100 for demo
+      }))
+    : dashboard?.skillDistribution || [];
 
   const cardStyle: React.CSSProperties = {
     background: "rgba(13,10,40,0.8)",
@@ -82,7 +109,7 @@ export default function Dashboard() {
             Your Selected Skills
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "0.65rem", marginBottom: "0.9rem" }}>
-            {[...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills].map(skill => (
+            {Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).map(skill => (
               <div
                 key={skill}
                 style={{
@@ -105,11 +132,11 @@ export default function Dashboard() {
             </div>
             <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: "10px", padding: "0.65rem" }}>
               <p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "0.75rem" }}>Duration</p>
-              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{confirmedRoadmap.timelineWeeks} weeks</p>
+              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{formatDuration(confirmedRoadmap.timePerDayMinutes || 60)}</p>
             </div>
             <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: "10px", padding: "0.65rem" }}>
               <p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "0.75rem" }}>Phases</p>
-              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{confirmedRoadmap.phases}</p>
+              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{estimatePhases(confirmedRoadmap.timePerDayMinutes || 60)}</p>
             </div>
           </div>
         </div>
@@ -386,7 +413,7 @@ export default function Dashboard() {
             Skill Distribution
           </h3>
           <ResponsiveContainer width="100%" height={200}>
-            <RadarChart data={dashboard?.skillDistribution || []}>
+            <RadarChart data={skillDistributionData}>
               <PolarGrid stroke="rgba(124,58,237,0.15)" />
               <PolarAngleAxis dataKey="skill" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }} />
               <Radar name="Level" dataKey="level" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.25} />
