@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { StarField } from "@/components/StarField";
 import logoPath from "/logo.png";
 import { getStoredStudent } from "@/lib/auth";
+import { getVideosForSkill } from "@/lib/skill-videos";
 
 type TabType = "videos" | "study" | "practice";
 
@@ -33,72 +34,22 @@ interface PhaseData {
 
 // Skill-specific phase content mapping
 function getPhaseContent(skill: string, level: string, phase: number): PhaseData {
-  const skillLower = skill.toLowerCase();
-  const levelLower = level.toLowerCase();
-  const phaseKey = phase;
+  // Use the new video mapping system
+  const videoData = getVideosForSkill(skill, level, phase);
 
-  // CYBERSECURITY - Beginner - Phase 1
-  if (skillLower.includes("cybersecurity") && levelLower.includes("beginner") && phaseKey === 1) {
-    return {
-      skillName: "Cybersecurity",
-      levelName: "Beginner",
-      phaseName: "Introduction to Cybersecurity",
-      phaseNumber: 1,
-      videos: [
-        { id: "1", title: "Cybersecurity Full Course", duration: "14:20", youtubeId: "hXSFdwIOfnE", watched: false },
-        { id: "2", title: "How Hackers Hack", duration: "11:45", youtubeId: "aU5uMqniukA", watched: false },
-        { id: "3", title: "Network Security Basics", duration: "16:30", youtubeId: "E03gh1huvW4", watched: false },
-      ],
-      studyMaterial: "# Cybersecurity Fundamentals - Phase 1\n\n## What is Cybersecurity?\nCybersecurity is the practice of protecting computer systems, networks, and data from digital attacks, unauthorized access, or damage. It's crucial in today's digital world where cyber threats are constantly evolving.\n\n## Types of Cyber Threats\n- **Malware**: Malicious software that can damage or disrupt systems\n- **Phishing**: Fraudulent attempts to obtain sensitive information\n- **Ransomware**: Malware that encrypts data and demands payment\n- **DDoS Attacks**: Overwhelming systems with traffic to cause disruption\n- **Social Engineering**: Manipulating people to gain access to systems\n\n## Basic Security Terminology\n- **Vulnerability**: Weakness in a system that can be exploited\n- **Threat**: Potential cause of an incident\n- **Risk**: Likelihood of a threat exploiting a vulnerability\n- **Attack**: Actual attempt to compromise security\n- **Exploit**: Method used to take advantage of a vulnerability\n\n## Why Cybersecurity Matters\n- Protects personal and sensitive data\n- Prevents financial losses from cyber attacks\n- Maintains business continuity\n- Ensures compliance with regulations\n- Builds trust with customers",
-      exercises: [
-        { id: "1", description: "Research and list 5 recent cyber attacks from news", completed: false },
-        { id: "2", description: "Identify security vulnerabilities in a sample scenario", completed: false },
-        { id: "3", description: "Complete a basic security quiz", completed: false },
-      ],
-    };
-  }
+  // Generate generic study material based on skill
+  const studyMaterial = `# ${skill} - Phase ${phase}\n\n## Introduction\nWelcome to Phase ${phase} of your ${skill} learning journey. This phase will help you build a strong foundation in ${skill}.\n\n## Learning Objectives\n- Understand the core concepts of ${skill}\n- Apply practical skills through hands-on exercises\n- Build confidence with real-world applications\n\n## Key Topics\n- Fundamentals and best practices\n- Practical implementation techniques\n- Industry-standard tools and workflows\n\n## Tips for Success\n- Practice regularly to reinforce learning\n- Don't hesitate to revisit concepts\n- Apply what you learn to real projects`;
 
-  // CYBERSECURITY - Beginner - Phase 2
-  if (skillLower.includes("cybersecurity") && levelLower.includes("beginner") && phaseKey === 2) {
-    return {
-      skillName: "Cybersecurity",
-      levelName: "Beginner",
-      phaseName: "Network Security and Ethical Hacking",
-      phaseNumber: 2,
-      videos: [
-        { id: "1", title: "Network Basics for Security", duration: "18:20", youtubeId: "3QhU9jdF4AE", watched: false },
-        { id: "2", title: "Introduction to Ethical Hacking", duration: "22:15", youtubeId: "3Kq1MIfTWCE", watched: false },
-        { id: "3", title: "Setting up Your Lab Environment", duration: "15:40", youtubeId: "WnNPBZM8xI4", watched: false },
-      ],
-      studyMaterial: "# Network Security - Phase 2\n\n## How Networks Communicate\n- IP addresses and ports\n- TCP/IP protocol suite\n- Network layers and their functions\n- Packet transmission process\n\n## Ethical Hacking vs Malicious Hacking\n- **Ethical Hacking**: Legal, authorized security testing\n- **Malicious Hacking**: Illegal, unauthorized access\n- Legal frameworks around ethical hacking\n- Certification requirements (CEH, OSCP)\n\n## Setting up Kali Linux for Practice\n- Download and install Kali Linux\n- Set up a virtual machine\n- Configure network settings\n- Install essential security tools\n\n## Key Security Tools\n- **Nmap**: Network scanning and discovery\n- **Wireshark**: Network protocol analysis\n- **Metasploit**: Penetration testing framework\n- **Burp Suite**: Web application security testing\n\n## Getting Started with CTF (Capture The Flag)\n- What are CTF challenges\n- Beginner-friendly CTF platforms\n- Common challenge types\n- Practice strategies",
-      exercises: [
-        { id: "1", description: "Set up a virtual lab environment", completed: false },
-        { id: "2", description: "Practice basic network commands", completed: false },
-        { id: "3", description: "Try a beginner CTF challenge", completed: false },
-      ],
-    };
-  }
-
-  // ETHICAL HACKING - Beginner - Phase 1
-  if (skillLower.includes("ethical hacking") && levelLower.includes("beginner") && phaseKey === 1) {
-    return {
-      skillName: "Ethical Hacking",
-      levelName: "Beginner",
-      phaseName: "Introduction to Ethical Hacking",
-      phaseNumber: 1,
-      videos: [
-        { id: "1", title: "What is Ethical Hacking", duration: "12:30", youtubeId: "3Kq1MIfTWCE", watched: false },
-        { id: "2", title: "Legal and Ethical Considerations", duration: "9:45", youtubeId: "Y1bhoMfXChw", watched: false },
-        { id: "3", title: "Reconnaissance Techniques", duration: "20:15", youtubeId: "WnNPBZM8xI4", watched: false },
-      ],
-      studyMaterial: "# Ethical Hacking Fundamentals - Phase 1\n\n## Types of Hackers\n- White Hat: Ethical hackers who help improve security\n- Black Hat: Malicious hackers who exploit systems\n- Grey Hat: Hackers who may violate ethics but not laws\n- Script Kiddies: Inexperienced hackers using tools\n\n## Laws Around Ethical Hacking\n- IT Act (India)\n- Computer Fraud and Abuse Act (US)\n- GDPR implications\n- Legal authorization requirements\n- Penetration testing contracts\n\n## Information Gathering Methods\n- OSINT: Open Source Intelligence gathering\n- Passive Reconnaissance: Gathering info without direct interaction\n- Active Reconnaissance: Direct interaction with target\n- Whois: Domain registration information\n- DNS Enumeration: Discovering subdomains and IPs\n\n## Documentation Best Practices\n- Professional report writing\n- Evidence preservation\n- Vulnerability classification\n- Risk assessment methodologies\n- Client communication",
-      exercises: [
-        { id: "1", description: "Research a target website legally using OSINT", completed: false },
-        { id: "2", description: "Practice using Whois and DNS lookup tools", completed: false },
-        { id: "3", description: "Document findings in a professional report", completed: false },
-      ],
-    };
-  }
+  return {
+    skillName: videoData.skillName,
+    levelName: videoData.levelName,
+    phaseName: videoData.phaseName,
+    phaseNumber: videoData.phaseNumber,
+    videos: videoData.videos,
+    studyMaterial,
+    exercises: videoData.exercises,
+  };
+}
 
   // GRAPHIC DESIGN - Beginner - Phase 1
   if (skillLower.includes("graphic design") && levelLower.includes("beginner") && phaseKey === 1) {
