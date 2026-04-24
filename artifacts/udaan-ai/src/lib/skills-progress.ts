@@ -1,4 +1,5 @@
 import { getConfirmedRoadmapProfile } from "@/lib/assessment-draft";
+import { Storage } from "@/lib/storage";
 
 export type SkillLevelId = "beginner" | "intermediate" | "advanced";
 
@@ -45,6 +46,48 @@ const DEFAULT_SKILLS = [
   { id: "app-dev", name: "App Development", icon: "📱", difficulty: "Medium" as const },
   { id: "cybersecurity", name: "Cybersecurity", icon: "🛡️", difficulty: "Hard" as const },
 ];
+
+const SKILL_ORDER: Record<string, number> = {
+  "python": 1,
+  "html-css": 2,
+  "javascript": 3,
+  "web-development": 4,
+  "react": 5,
+  "node-js": 6,
+  "data-analysis": 7,
+  "statistics": 8,
+  "machine-learning": 9,
+  "deep-learning": 10,
+  "canva": 1,
+  "color-theory": 2,
+  "typography": 3,
+  "graphic-design": 4,
+  "figma": 5,
+  "ui-design": 6,
+  "ux-research": 7,
+  "ui-ux-design": 8,
+  "communication-skills": 1,
+  "time-management": 2,
+  "public-speaking": 3,
+  "leadership": 4,
+  "social-media-marketing": 1,
+  "content-creation": 2,
+  "seo-basics": 3,
+  "digital-marketing": 4,
+  "email-marketing": 5,
+  "accounting-principles": 1,
+  "taxation-basics": 2,
+  "financial-statements": 3,
+  "tally-excel": 4,
+  "excel-sql": 1,
+  "data-visualization": 2,
+  "power-bi": 3,
+  "data-science": 4,
+  "cybersecurity": 1,
+  "network-security": 2,
+  "ethical-hacking": 3,
+  "penetration-testing": 4,
+};
 
 function normalizeToSkillName(raw: string): string {
   const map: Record<string, string> = {
@@ -98,11 +141,21 @@ function makeLevels(skillId: string): SkillLevel[] {
 
 export function getSkillsFromRoadmap(): SkillItem[] {
   const confirmed = getConfirmedRoadmapProfile();
-  const source = confirmed
+  
+  // Try to load from localStorage if confirmed profile is empty
+  let source = confirmed
     ? Array.from(new Set([...confirmed.interests, ...confirmed.extraSkills].map(normalizeToSkillName)))
-    : DEFAULT_SKILLS.map(s => s.name);
+    : null;
 
-  const names = source.length > 0 ? source : ["Python", "Web Development", "AI/ML"];
+  if (!source || source.length === 0) {
+    const stored = Storage.getRoadmap();
+    if (stored) {
+      source = Array.from(new Set([...(stored.interests || []), ...(stored.extraSkills || [])].map(normalizeToSkillName)));
+    }
+  }
+
+  const finalSource = source && source.length > 0 ? source : DEFAULT_SKILLS.map(s => s.name);
+  const names = finalSource.length > 0 ? finalSource : ["Python", "Web Development", "AI/ML"];
 
   return names.map(name => {
     const matched = DEFAULT_SKILLS.find(s => s.name.toLowerCase() === name.toLowerCase());
@@ -119,6 +172,11 @@ export function getSkillsFromRoadmap(): SkillItem[] {
       difficulty,
       levels: makeLevels(id),
     };
+  }).sort((a, b) => {
+    const orderA = SKILL_ORDER[a.id] ?? 999;
+    const orderB = SKILL_ORDER[b.id] ?? 999;
+    if (orderA === orderB) return a.name.localeCompare(b.name);
+    return orderA - orderB;
   });
 }
 

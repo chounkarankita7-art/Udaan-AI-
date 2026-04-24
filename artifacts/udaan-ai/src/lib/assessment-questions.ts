@@ -649,19 +649,6 @@ export const Q6_OTHER_SKILL_LEVEL: QuestionData = {
   isFreeText: false,
 };
 
-// Q7: Other field - Challenge
-export const Q7_OTHER_CHALLENGE: QuestionData = {
-  question: "What's your biggest challenge when it comes to learning?",
-  options: [
-    "😰 Don't know where to start",
-    "⏰ Can't stay consistent",
-    "🤯 Too much info everywhere",
-    "😔 Tried before but gave up",
-    "💪 None, I'm ready!",
-  ],
-  isFreeText: false,
-};
-
 // SECOND TO LAST QUESTION: Biggest challenge
 export const Q_CHALLENGE: QuestionData = {
   question: "One last thing — what's your biggest challenge when it comes to learning?",
@@ -672,6 +659,81 @@ export const Q_CHALLENGE: QuestionData = {
     "🤯 Too much information everywhere",
     "😔 Tried before but gave up",
     "💪 None, I'm ready to go!",
+  ],
+  isFreeText: false,
+};
+
+// Q5: CA Preparation Status (for Commerce + Maths + CA path)
+export const Q5_CA_PREPARATION: QuestionData = {
+  question: "Have you started CA preparation?",
+  options: [
+    "❌ Not yet started",
+    "📖 Self studying",
+    "🏫 Joined coaching",
+    "✅ Already registered for foundation",
+  ],
+  isFreeText: false,
+};
+
+// Q6: CA Challenge (for Commerce + Maths + CA path)
+export const Q6_CA_CHALLENGE: QuestionData = {
+  question: "What's your biggest challenge with CA?",
+  options: [
+    "📚 Too much syllabus",
+    "🧮 Maths and accounts tough",
+    "⏰ Time management",
+    "💰 Coaching fees",
+    "🤷 Don't know where to start",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Video Equipment (for Arts + Journalism + Video path)
+export const Q5_VIDEO_EQUIPMENT: QuestionData = {
+  question: "Do you have any equipment?",
+  options: [
+    "📱 Just my smartphone",
+    "📷 Basic camera",
+    "🎥 Good camera setup",
+    "❌ No equipment yet",
+  ],
+  isFreeText: false,
+};
+
+// Q6: Content Goal (for Arts + Journalism + Video path)
+export const Q6_CONTENT_GOAL: QuestionData = {
+  question: "What's your content goal?",
+  options: [
+    "💰 Earn through YouTube",
+    "📢 Build personal brand",
+    "🎬 Work in media industry",
+    "🏢 Create for businesses",
+    "🤷 Just exploring",
+  ],
+  isFreeText: false,
+};
+
+// Q5: Daily Time (for Working Professional paths)
+export const Q5_DAILY_TIME: QuestionData = {
+  question: "How many hours can you dedicate daily?",
+  options: [
+    "⏰ 30 minutes",
+    "⏰ 1 hour",
+    "⏰ 2 hours",
+    "⏰ More than 2 hours",
+  ],
+  isFreeText: false,
+};
+
+// Q6: Timeline (for Working Professional paths)
+export const Q6_TIMELINE: QuestionData = {
+  question: "What's your timeline to achieve your goal?",
+  options: [
+    "⚡ ASAP - very urgent",
+    "📅 Within 3 months",
+    "🗓️ Within 6 months",
+    "📆 Within 1 year",
+    "🤷 No specific timeline",
   ],
   isFreeText: false,
 };
@@ -728,8 +790,6 @@ export function getNextQuestion(history: AnswerHistory[]): QuestionData | null {
       if (q2.includes("design")) return Q3_DESIGN_STREAM;
       if (q2.includes("other")) return Q3_OTHER_FIELD;
     } else if (q1.includes("graduation")) {
-      if (q2.includes("engineering")) return Q4_ENGINEERING_NOW;
-      if (q2.includes("business")) return Q4_BUSINESS_NEXT;
       if (q2.includes("other")) return Q3_OTHER_FIELD;
     } else if (q1.includes("working")) {
       if (q2.includes("it/technology")) return Q3_TECH_DURATION;
@@ -793,6 +853,16 @@ export function getNextQuestion(history: AnswerHistory[]): QuestionData | null {
       return Q5_OTHER_INTEREST;
     }
 
+    // Commerce + Maths + CA path - show Q5_CA_PREPARATION
+    if (q1.includes("school") && q2.includes("commerce") && q3.includes("math") && q4.includes("ca")) {
+      return Q5_CA_PREPARATION;
+    }
+
+    // Arts + Journalism + Video path - show Q5_VIDEO_EQUIPMENT
+    if (q1.includes("school") && q2.includes("arts") && q3.includes("journalism") && q4.includes("video")) {
+      return Q5_VIDEO_EQUIPMENT;
+    }
+
     if (q1.includes("school") || q1.includes("12th")) {
       if (q2.includes("science")) {
         if (q3.includes("pcm")) {
@@ -818,10 +888,20 @@ export function getNextQuestion(history: AnswerHistory[]): QuestionData | null {
     }
   }
 
-  // Q5 answered - show Q6 for "Other" path or challenge for other paths
+  // Q5 answered - show Q6 for specific paths
   if (history.length === 6) {
     const q4 = answers[4].toLowerCase();
     const q5 = answers[5].toLowerCase();
+
+    // Commerce + CA path - Q5_CA_PREPARATION answered, show Q6_CA_CHALLENGE
+    if (q4.includes("ca") && (q5.includes("not yet") || q5.includes("self") || q5.includes("coaching") || q5.includes("registered"))) {
+      return Q6_CA_CHALLENGE;
+    }
+
+    // Arts + Journalism + Video path - Q5_VIDEO_EQUIPMENT answered, show Q6_CONTENT_GOAL
+    if (q4.includes("video") && (q5.includes("smartphone") || q5.includes("camera") || q5.includes("no equipment"))) {
+      return Q6_CONTENT_GOAL;
+    }
 
     // Handle "Other" field path - Q5_OTHER_INTEREST answered
     if (q5.includes("technology") || q5.includes("marketing") || q5.includes("design") || q5.includes("data") || q5.includes("content") || q5.includes("help")) {
@@ -835,17 +915,35 @@ export function getNextQuestion(history: AnswerHistory[]): QuestionData | null {
 
     // Handle "Other" field path - Q6_OTHER_SKILL_LEVEL answered
     if (q6.includes("beginner") || q6.includes("basics") || q6.includes("intermediate") || q6.includes("advanced")) {
-      return Q7_OTHER_CHALLENGE;
+      return Q_CHALLENGE;
     }
   }
 
-  // Q7 answered - show challenge question if not already shown
-  if (history.length >= 6) {
+  // Working Professional paths - add Q5_DAILY_TIME after Q2_WORKING or Q2_CAREER_CHANGE
+  if (history.length === 3) {
+    const q1 = answers[1].toLowerCase();
+    const q2 = answers[2].toLowerCase();
+
+    if ((q1.includes("working") || q1.includes("career change")) && (q2.includes("it") || q2.includes("finance") || q2.includes("design") || q2.includes("marketing") || q2.includes("healthcare") || q2.includes("manufacturing") || q2.includes("education") || q2.includes("other"))) {
+      return Q5_DAILY_TIME;
+    }
+  }
+
+  // Q5_DAILY_TIME answered - show Q6_TIMELINE for working professionals
+  if (history.length === 4) {
+    const q3 = answers[3].toLowerCase();
+    if (q3.includes("30 minutes") || q3.includes("1 hour") || q3.includes("2 hours") || q3.includes("more than")) {
+      return Q6_TIMELINE;
+    }
+  }
+
+  // Q6_TIMELINE answered - show challenge question if not already shown
+  if (history.length >= 5) {
     const lastQuestion = history[history.length - 1].question;
-    if (lastQuestion !== Q_CHALLENGE.question && lastQuestion !== Q_SPECIFIC_SKILLS.question && lastQuestion !== Q7_OTHER_CHALLENGE.question) {
+    if (lastQuestion !== Q_CHALLENGE.question && lastQuestion !== Q_SPECIFIC_SKILLS.question) {
       return Q_CHALLENGE;
     }
-    if (lastQuestion === Q_CHALLENGE.question || lastQuestion === Q7_OTHER_CHALLENGE.question) {
+    if (lastQuestion === Q_CHALLENGE.question) {
       return Q_SPECIFIC_SKILLS;
     }
   }

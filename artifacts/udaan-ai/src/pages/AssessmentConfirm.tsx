@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { StarField } from "@/components/StarField";
 import { useToast } from "@/hooks/use-toast";
+import { Storage } from "@/lib/storage";
 import { getStoredStudent, setStoredStudent } from "@/lib/auth";
 import {
   clearAssessmentSnapshot,
@@ -236,6 +237,23 @@ export default function AssessmentConfirm() {
   async function confirmRoadmap() {
     setConfirming(true);
     try {
+      // Prepare roadmap data
+      const roadmapData = {
+        goal: currentDraft.profile.goal || "Get a Job",
+        field: currentDraft.profile.field || "General Tech",
+        skillLevel: currentDraft.profile.skillLevel || "beginner",
+        timePerDayMinutes: currentDraft.profile.timePerDayMinutes || 60,
+        interests: currentDraft.profile.interests || [],
+        extraSkills: currentDraft.profile.extraSkills || [],
+        timelineWeeks: currentDraft.profile.timelineWeeks || 24,
+        phases: estimatePhases(currentDraft.profile),
+        track: currentDraft.profile.field || currentDraft.profile.interests?.[0] || "General Tech",
+        generatedAt: Date.now(),
+      };
+
+      // Save to localStorage using Storage utility
+      Storage.saveRoadmap(roadmapData);
+
       // Try real API first
       const res = await fetch("/api/assessment/confirm", {
         method: "POST",
@@ -244,16 +262,7 @@ export default function AssessmentConfirm() {
       });
       if (!res.ok) throw new Error(await res.text());
 
-      setConfirmedRoadmapProfile({
-        goal: currentDraft.profile.goal || "Get a Job",
-        field: currentDraft.profile.field || "General Tech",
-        skillLevel: currentDraft.profile.skillLevel || "beginner",
-        timePerDayMinutes: currentDraft.profile.timePerDayMinutes || 60,
-        interests: currentDraft.profile.interests || [],
-        extraSkills: currentDraft.profile.extraSkills || [],
-        timelineWeeks: currentDraft.profile.timelineWeeks || 24,
-        phases: estimatePhases(currentDraft.profile),
-      });
+      setConfirmedRoadmapProfile(roadmapData);
       setStoredStudent({ ...currentStudent, assessmentCompleted: true });
       clearAssessmentSnapshot();
       toast({ title: "Roadmap generated!", description: "Opening your dashboard." });
@@ -262,7 +271,7 @@ export default function AssessmentConfirm() {
       // Fallback to mock roadmap confirmation if API is not available
       console.log("API not available, using mock roadmap confirmation");
 
-      setConfirmedRoadmapProfile({
+      const roadmapData = {
         goal: currentDraft.profile.goal || "Get a Job",
         field: currentDraft.profile.field || "General Tech",
         skillLevel: currentDraft.profile.skillLevel || "beginner",
@@ -271,7 +280,14 @@ export default function AssessmentConfirm() {
         extraSkills: currentDraft.profile.extraSkills || [],
         timelineWeeks: currentDraft.profile.timelineWeeks || 24,
         phases: estimatePhases(currentDraft.profile),
-      });
+        track: currentDraft.profile.field || currentDraft.profile.interests?.[0] || "General Tech",
+        generatedAt: Date.now(),
+      };
+
+      // Save to localStorage using Storage utility
+      Storage.saveRoadmap(roadmapData);
+
+      setConfirmedRoadmapProfile(roadmapData);
       setStoredStudent({ ...currentStudent, assessmentCompleted: true });
       clearAssessmentSnapshot();
       toast({ title: "Demo Roadmap Generated!", description: "Opening your dashboard." });

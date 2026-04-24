@@ -9,6 +9,7 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, RadialBar, RadialBarChart, Legend,
 } from "recharts";
 import { getConfirmedRoadmapProfile } from "@/lib/assessment-draft";
+import { Storage } from "@/lib/storage";
 
 function formatDuration(timePerDayMinutes: number): string {
   if (timePerDayMinutes <= 30) return "20-24 weeks";
@@ -28,6 +29,10 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const student = getStoredStudent();
   const confirmedRoadmap = getConfirmedRoadmapProfile();
+  const storedRoadmap = Storage.getRoadmap();
+  
+  // Use confirmedRoadmap first, then fall back to storedRoadmap
+  const roadmapData = confirmedRoadmap || storedRoadmap;
 
   const { data: dashboard, isLoading } = useGetStudentDashboard(student?.id || "", {
     query: {
@@ -60,8 +65,8 @@ export default function Dashboard() {
   }
 
   // Count the number of skills in user's roadmap for Courses Enrolled
-  const skillsCount = confirmedRoadmap 
-    ? Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).length
+  const skillsCount = roadmapData 
+    ? Array.from(new Set([...(roadmapData.interests || []), ...(roadmapData.extraSkills || [])])).length
     : dashboard?.coursesEnrolled || 0;
 
   const stats = [
@@ -73,8 +78,8 @@ export default function Dashboard() {
   ];
 
   // Generate skill distribution data from actual confirmed roadmap skills
-  const skillDistributionData = confirmedRoadmap 
-    ? Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).map(skill => ({
+  const skillDistributionData = roadmapData 
+    ? Array.from(new Set([...(roadmapData.interests || []), ...(roadmapData.extraSkills || [])])).map(skill => ({
         skill,
         level: Math.floor(Math.random() * 40) + 60, // Random level between 60-100 for demo
       }))
@@ -103,13 +108,13 @@ export default function Dashboard() {
         Welcome back, {dashboard?.student?.name || student.name}
       </p>
 
-      {confirmedRoadmap && (
+      {roadmapData && (
         <div style={{ ...cardStyle, marginBottom: "1.25rem" }}>
           <h3 style={{ color: "white", fontWeight: 700, marginBottom: "0.8rem", fontSize: "1rem" }}>
             Your Selected Skills
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "0.65rem", marginBottom: "0.9rem" }}>
-            {Array.from(new Set([...confirmedRoadmap.interests, ...confirmedRoadmap.extraSkills])).map(skill => (
+            {Array.from(new Set([...(roadmapData.interests || []), ...(roadmapData.extraSkills || [])])).map(skill => (
               <div
                 key={skill}
                 style={{
@@ -128,15 +133,15 @@ export default function Dashboard() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.65rem" }}>
             <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: "10px", padding: "0.65rem" }}>
               <p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "0.75rem" }}>Track</p>
-              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{confirmedRoadmap.field}</p>
+              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{roadmapData.field || roadmapData.track || "General Tech"}</p>
             </div>
             <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: "10px", padding: "0.65rem" }}>
               <p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "0.75rem" }}>Duration</p>
-              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{formatDuration(confirmedRoadmap.timePerDayMinutes || 60)}</p>
+              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{formatDuration(roadmapData.timePerDayMinutes || 60)}</p>
             </div>
             <div style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: "10px", padding: "0.65rem" }}>
               <p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "0.75rem" }}>Phases</p>
-              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{estimatePhases(confirmedRoadmap.timePerDayMinutes || 60)}</p>
+              <p style={{ margin: "0.25rem 0 0", color: "white", fontWeight: 700 }}>{estimatePhases(roadmapData.timePerDayMinutes || 60)}</p>
             </div>
           </div>
         </div>

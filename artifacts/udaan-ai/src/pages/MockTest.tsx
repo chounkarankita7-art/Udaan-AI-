@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { useLocation, useParams } from "wouter";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useParams, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { getStoredStudent } from "@/lib/auth";
+import { Storage } from "@/lib/storage";
 import { StarField } from "@/components/StarField";
 import { getSkillsFromRoadmap } from "@/lib/skills-progress";
-import { getStoredStudent } from "@/lib/auth";
 
 interface Question {
   id: string;
@@ -119,20 +120,129 @@ const softSkillsQuestions: Question[] = [
   { id: "10", question: "What is networking?", options: ["Building professional relationships", "Social media only", "Business cards only", "Email only"], correct: 0 },
 ];
 
+const canvaQuestions: Question[] = [
+  { id: "1", question: "What is Canva primarily used for?", options: ["Video editing", "Graphic design", "Coding", "Data analysis"], correct: 1 },
+  { id: "2", question: "Which Canva feature lets you resize designs?", options: ["Magic Resize", "Smart Crop", "Auto Scale", "Resize Tool"], correct: 0 },
+  { id: "3", question: "What file formats can you export from Canva?", options: ["Only PDF", "Only PNG", "PNG, JPG, PDF, MP4", "Only JPG"], correct: 2 },
+  { id: "4", question: "What is a Canva template?", options: ["A pre-made design you can customize", "A blank canvas", "A color palette", "A font style"], correct: 0 },
+  { id: "5", question: "Which Canva plan is free?", options: ["Canva Pro", "Canva Enterprise", "Canva Free", "Canva Business"], correct: 2 },
+  { id: "6", question: "What does the 'Brand Kit' feature do in Canva?", options: ["Saves your brand colors fonts and logos", "Creates logos automatically", "Generates brand names", "Manages social media"], correct: 0 },
+  { id: "7", question: "Can Canva be used on mobile?", options: ["No, desktop only", "Yes, iOS only", "Yes, Android only", "Yes, both iOS and Android"], correct: 3 },
+  { id: "8", question: "What is Canva's AI image generator called?", options: ["Canva AI", "Text to Image", "Magic Media", "Dream Lab"], correct: 2 },
+  { id: "9", question: "Which element type is NOT available in Canva?", options: ["Shapes", "Icons", "3D models", "Stickers"], correct: 2 },
+  { id: "10", question: "What is a 'frame' in Canva used for?", options: ["Adding borders", "Placing images in shapes", "Creating animations", "Adding text"], correct: 1 },
+];
+
+const colorTheoryQuestions: Question[] = [
+  { id: "1", question: "What are the primary colors?", options: ["Red, Green, Blue", "Red, Yellow, Blue", "Cyan, Magenta, Yellow", "Orange, Purple, Green"], correct: 1 },
+  { id: "2", question: "What are complementary colors?", options: ["Colors next to each other on color wheel", "Colors opposite each other on color wheel", "Colors that are all warm", "Colors that are all cool"], correct: 1 },
+  { id: "3", question: "What does 'hue' mean?", options: ["The brightness of a color", "The pure color itself", "The darkness of a color", "The warmth of a color"], correct: 1 },
+  { id: "4", question: "What is a monochromatic color scheme?", options: ["Using multiple colors", "Using only one color with its shades and tints", "Using only black and white", "Using warm colors only"], correct: 1 },
+  { id: "5", question: "Which color is considered warm?", options: ["Blue", "Green", "Purple", "Orange"], correct: 3 },
+  { id: "6", question: "What does 'saturation' refer to?", options: ["How light a color is", "How dark a color is", "How pure/intense a color is", "How warm a color is"], correct: 2 },
+  { id: "7", question: "What are analogous colors?", options: ["Colors opposite on color wheel", "Colors next to each other on color wheel", "Colors that are all dark", "Colors that are all bright"], correct: 1 },
+  { id: "8", question: "What color does mixing Red and Blue make?", options: ["Orange", "Green", "Purple", "Brown"], correct: 2 },
+  { id: "9", question: "What is the color wheel used for?", options: ["Measuring color temperature", "Understanding color relationships", "Creating gradients", "Selecting fonts"], correct: 1 },
+  { id: "10", question: "What does 'tint' mean in color theory?", options: ["Adding black to a color", "Adding white to a color", "Adding gray to a color", "Removing color"], correct: 1 },
+];
+
+const graphicDesignQuestions: Question[] = [
+  { id: "1", question: "What does UI stand for?", options: ["User Interface", "Universal Input", "Unique Interaction", "User Integration"], correct: 0 },
+  { id: "2", question: "What is typography?", options: ["The art of taking photos", "The art of arranging text", "The art of drawing", "The art of color mixing"], correct: 1 },
+  { id: "3", question: "What is white space in design?", options: ["White colored backgrounds", "Empty space around design elements", "White text on dark background", "Space between letters"], correct: 1 },
+  { id: "4", question: "What is a vector graphic?", options: ["A photo that can be zoomed in", "A mathematical path that scales without losing quality", "A type of animation", "A 3D graphic"], correct: 1 },
+  { id: "5", question: "What does DPI stand for?", options: ["Design Per Inch", "Dots Per Inch", "Digital Print Image", "Design Print Interface"], correct: 1 },
+  { id: "6", question: "Which software is used for vector design?", options: ["Photoshop", "Illustrator", "Premiere Pro", "After Effects"], correct: 1 },
+  { id: "7", question: "What is kerning in typography?", options: ["The space between lines of text", "The space between individual letters", "The size of text", "The color of text"], correct: 1 },
+  { id: "8", question: "What is a logo?", options: ["A type of font", "A visual symbol representing a brand", "A color palette", "A design template"], correct: 1 },
+  { id: "9", question: "What is the rule of thirds in design?", options: ["Using only 3 colors", "Dividing design into 3 equal parts for balance", "Using 3 fonts maximum", "Creating 3 versions of every design"], correct: 1 },
+  { id: "10", question: "What does CMYK stand for?", options: ["Cyan Magenta Yellow Black", "Color Mode Yellow Key", "Creative Media Yellow Kit", "Cyan Mix Yellow Kombine"], correct: 0 },
+];
+
+const communicationSkillsQuestions: Question[] = [
+  { id: "1", question: "What is active listening?", options: ["Listening while doing other things", "Fully concentrating on what is being said", "Listening to music", "Asking many questions"], correct: 1 },
+  { id: "2", question: "What is non-verbal communication?", options: ["Written communication", "Body language gestures and facial expressions", "Sign language only", "Email communication"], correct: 1 },
+  { id: "3", question: "What makes communication effective?", options: ["Using complex words", "Speaking very fast", "Clear concise and relevant messaging", "Using technical jargon"], correct: 2 },
+  { id: "4", question: "What is empathy in communication?", options: ["Agreeing with everyone", "Understanding others feelings and perspective", "Being sympathetic always", "Avoiding conflict"], correct: 1 },
+  { id: "5", question: "What is the best way to handle disagreement?", options: ["Avoid the conversation", "Listen understand then respond calmly", "Raise your voice", "End the conversation"], correct: 1 },
+  { id: "6", question: "What does confidence in communication look like?", options: ["Speaking aggressively", "Making eye contact speaking clearly", "Speaking very slowly", "Using many hand gestures"], correct: 1 },
+  { id: "7", question: "What is feedback in communication?", options: ["Criticizing someone", "Response to a message that helps improve", "Repeating what was said", "Ignoring the speaker"], correct: 1 },
+  { id: "8", question: "What is paraphrasing?", options: ["Reading a paragraph", "Restating someone's message in your own words", "Writing a summary", "Translating language"], correct: 1 },
+  { id: "9", question: "Which of these improves public speaking?", options: ["Reading from notes always", "Practice and preparation", "Speaking very quietly", "Avoiding eye contact"], correct: 1 },
+  { id: "10", question: "What is the first step in resolving conflict?", options: ["Win the argument", "Listen to all sides without judgment", "Involve others", "Walk away immediately"], correct: 1 },
+];
+
+const socialMediaMarketingQuestions: Question[] = [
+  { id: "1", question: "What does engagement mean on social media?", options: ["Number of followers", "Likes comments shares and interactions", "Number of posts", "Amount of money spent"], correct: 1 },
+  { id: "2", question: "What is a hashtag used for?", options: ["Making text bold", "Categorizing content for discoverability", "Tagging people", "Adding links"], correct: 1 },
+  { id: "3", question: "What is the best time to post on Instagram?", options: ["When your audience is most active", "Midnight every day", "Early morning only", "It doesn't matter"], correct: 0 },
+  { id: "4", question: "What is a content calendar?", options: ["A calendar showing holidays", "A plan for scheduling social media posts", "A list of content ideas", "A tool for editing images"], correct: 1 },
+  { id: "5", question: "What does CTR stand for?", options: ["Content To Reach", "Click Through Rate", "Creative Text Ratio", "Customer Target Rate"], correct: 1 },
+  { id: "6", question: "Which platform is best for B2B marketing?", options: ["TikTok", "Instagram", "LinkedIn", "Snapchat"], correct: 2 },
+  { id: "7", question: "What is a social media algorithm?", options: ["A type of advertisement", "System that decides what content users see", "A scheduling tool", "A type of hashtag"], correct: 1 },
+  { id: "8", question: "What is influencer marketing?", options: ["Paying celebrities to act in ads", "Partnering with people who have engaged audiences", "Creating viral content", "Running paid advertisements"], correct: 1 },
+  { id: "9", question: "What is reach on social media?", options: ["Number of likes", "Number of unique accounts that saw your content", "Number of followers", "Number of shares"], correct: 1 },
+  { id: "10", question: "What does going viral mean?", options: ["Getting a computer virus", "Content spreading rapidly to large audiences", "Posting every day", "Having many followers"], correct: 1 },
+];
+
+const accountingPrinciplesQuestions: Question[] = [
+  { id: "1", question: "What is a balance sheet?", options: ["A list of expenses", "Statement showing assets liabilities and equity", "A tax document", "A bank statement"], correct: 1 },
+  { id: "2", question: "What does debit mean in accounting?", options: ["Money going out of bank", "Left side entry that increases assets", "A credit card transaction", "A loan payment"], correct: 1 },
+  { id: "3", question: "What is revenue?", options: ["Total expenses of a business", "Income generated from business operations", "Profit after tax", "Money borrowed"], correct: 1 },
+  { id: "4", question: "What is depreciation?", options: ["Increase in asset value", "Decrease in asset value over time", "A type of expense", "A tax benefit"], correct: 1 },
+  { id: "5", question: "What is the accounting equation?", options: ["Revenue minus Expenses equals Profit", "Assets equals Liabilities plus Equity", "Income minus Tax equals Net income", "Debit equals Credit"], correct: 1 },
+  { id: "6", question: "What is a profit and loss statement?", options: ["Shows assets and liabilities", "Shows revenue expenses and profit over a period", "Shows cash flow", "Shows tax payable"], correct: 1 },
+  { id: "7", question: "What is working capital?", options: ["Total assets of a company", "Current assets minus current liabilities", "Long term investments", "Annual profit"], correct: 1 },
+  { id: "8", question: "What is GST?", options: ["General Sales Tax", "Goods and Services Tax", "Government Service Tax", "General Service Transaction"], correct: 1 },
+  { id: "9", question: "What is cash flow?", options: ["Profit of a company", "Movement of money in and out of business", "Bank balance", "Total revenue"], correct: 1 },
+  { id: "10", question: "What is an invoice?", options: ["A receipt of payment", "A document requesting payment for goods or services", "A bank statement", "A tax document"], correct: 1 },
+];
+
 function getQuestionsForSkill(skill: string, level: string, phase: number): Question[] {
-  const skillLower = skill.toLowerCase();
+  const skillLower = skill.toLowerCase().replace(/\s+/g, '-');
   const levelLower = level.toLowerCase();
   
+  // Match by exact hyphenated skill ID first
+  if (skillLower === "python") return pythonQuestions;
+  if (skillLower === "web-development" || skillLower === "web-dev") return webDevQuestions;
+  if (skillLower === "cybersecurity") return cybersecurityQuestions;
+  if (skillLower === "digital-marketing") return digitalMarketingQuestions;
+  if (skillLower === "data-science") return dataScienceQuestions;
+  if (skillLower === "machine-learning" || skillLower === "ml") return machineLearningQuestions;
+  if (skillLower === "graphic-design" || skillLower === "ui-ux-design" || skillLower === "design") return graphicDesignQuestions;
+  if (skillLower === "communication-skills" || skillLower === "soft-skills") return communicationSkillsQuestions;
+  if (skillLower === "canva") return canvaQuestions;
+  if (skillLower === "color-theory") return colorTheoryQuestions;
+  if (skillLower === "social-media-marketing") return socialMediaMarketingQuestions;
+  if (skillLower === "accounting-principles" || skillLower === "accounting") return accountingPrinciplesQuestions;
+  
+  // Fallback to partial matches for backward compatibility
   if (skillLower.includes("python")) return pythonQuestions;
   if (skillLower.includes("web") || skillLower.includes("html") || skillLower.includes("css")) return webDevQuestions;
   if (skillLower.includes("cyber") || skillLower.includes("security")) return cybersecurityQuestions;
   if (skillLower.includes("marketing")) return digitalMarketingQuestions;
   if (skillLower.includes("data science")) return dataScienceQuestions;
   if (skillLower.includes("machine learning") || skillLower.includes("ml")) return machineLearningQuestions;
-  if (skillLower.includes("design") || skillLower.includes("ui") || skillLower.includes("ux") || skillLower.includes("figma")) return designQuestions;
-  if (skillLower.includes("soft") || skillLower.includes("communication") || skillLower.includes("speaking")) return softSkillsQuestions;
+  if (skillLower.includes("design") || skillLower.includes("ui") || skillLower.includes("ux") || skillLower.includes("figma")) return graphicDesignQuestions;
+  if (skillLower.includes("soft") || skillLower.includes("communication") || skillLower.includes("speaking")) return communicationSkillsQuestions;
+  if (skillLower.includes("canva")) return canvaQuestions;
+  if (skillLower.includes("color") || skillLower.includes("theory")) return colorTheoryQuestions;
+  if (skillLower.includes("social")) return socialMediaMarketingQuestions;
+  if (skillLower.includes("accounting")) return accountingPrinciplesQuestions;
   
-  return pythonQuestions;
+  // Generic fallback for unknown skills - generate generic questions about the skill
+  return [
+    { id: "1", question: `What is ${skill} primarily used for?`, options: ["Data analysis", "Creative work", "Technical tasks", "All of the above"], correct: 3 },
+    { id: "2", question: `Which skill is important for ${skill}?`, options: ["Problem solving", "Communication", "Technical knowledge", "All of the above"], correct: 3 },
+    { id: "3", question: `What is a key concept in ${skill}?`, options: ["Fundamentals", "Advanced techniques", "Best practices", "All of the above"], correct: 3 },
+    { id: "4", question: `How can you improve your ${skill} skills?`, options: ["Practice", "Study", "Projects", "All of the above"], correct: 3 },
+    { id: "5", question: `What tools are commonly used in ${skill}?`, options: ["Software applications", "Manual tools", "Online resources", "All of the above"], correct: 3 },
+    { id: "6", question: `What are the benefits of learning ${skill}?`, options: ["Career growth", "Personal development", "Problem solving", "All of the above"], correct: 3 },
+    { id: "7", question: `What industries use ${skill}?`, options: ["Technology", "Business", "Creative", "All of the above"], correct: 3 },
+    { id: "8", question: `What is the best way to start learning ${skill}?`, options: ["Online courses", "Books", "Practice projects", "All of the above"], correct: 3 },
+    { id: "9", question: `What challenges might you face with ${skill}?`, options: ["Complexity", "Time investment", "Learning curve", "All of the above"], correct: 3 },
+    { id: "10", question: `What are advanced topics in ${skill}?`, options: ["Specialization", "Integration", "Optimization", "All of the above"], correct: 3 },
+  ];
 }
 
 const availableTests = [
@@ -195,9 +305,42 @@ export default function MockTest() {
       setTimeout(() => setShowConfetti(false), 3000);
     }
 
-    // Save test result to database
     const student = getStoredStudent();
-    if (student && selectedTest && params.phaseId) {
+    if (student && selectedTest && params.phaseId && params.skillId && params.levelId) {
+      const phaseNumber = parseInt(params.phaseId);
+      
+      // Save to localStorage using Storage utility
+      Storage.saveProgress(params.skillId, params.levelId, phaseNumber, {
+        completed: true,
+        testPassed: true,
+        score: pct,
+        completedAt: Date.now()
+      });
+      if (passed) {
+        Storage.saveProgress(params.skillId, params.levelId, phaseNumber + 1, {
+          unlocked: true
+        });
+      }
+
+      // Call complete-phase API to save to database and unlock next phase
+      try {
+        await fetch('/api/progress/complete-phase', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: student.id,
+            skillId: params.skillId,
+            level: params.levelId,
+            phaseNumber: phaseNumber,
+            score: pct,
+            passed: passed,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save progress to database:", error);
+      }
+
+      // Also save test result to existing API for backward compatibility
       try {
         await fetch(`/api/skill-progress/test-results/${student.id}`, {
           method: "POST",
@@ -207,7 +350,7 @@ export default function MockTest() {
             testType: params.testType || "phase",
             score: pct,
             passed,
-            phaseNumber: parseInt(params.phaseId),
+            phaseNumber: phaseNumber,
             level: params.levelId,
           }),
         });

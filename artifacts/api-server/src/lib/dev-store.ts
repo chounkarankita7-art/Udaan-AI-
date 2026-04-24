@@ -92,6 +92,7 @@ export type DevUserProgress = {
   level: "beginner" | "intermediate" | "advanced";
   phaseNumber: number;
   status: "locked" | "unlocked" | "completed";
+  score?: number;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;

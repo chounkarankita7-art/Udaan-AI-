@@ -8,6 +8,7 @@ import {
   isPhaseMockPassed,
   isPhaseUnlocked,
 } from "@/lib/skills-progress";
+import { Storage } from "@/lib/storage";
 
 const accent = "linear-gradient(135deg, #4c35c8, #6d4fd6)";
 
@@ -24,10 +25,15 @@ export default function SkillPhases() {
   const levelUnlocked =
     skill && levelIndex >= 0 ? isLevelUnlocked(skill.levels, levelIndex, skill.id, progress) : false;
 
+  // Get progress from localStorage for phase unlock logic
+  const storageProgress = skillId && levelId ? Storage.getProgress(skillId, levelId) : {};
+
   const phases = useMemo(() => {
     if (!level) return [];
     return level.phases.map((phase, index) => {
-      const unlocked = isPhaseUnlocked(level.phases, index, progress);
+      const phaseNumber = index + 1;
+      // Phase 1 always unlocked, phase N unlocked if previous phase completed
+      const unlocked = phaseNumber === 1 || storageProgress[phaseNumber - 1]?.completed === true;
       const mockDone = isPhaseMockPassed(phase.id, progress);
       const contentDone = isPhaseContentDone(phase.id, progress);
       let status: string;
@@ -37,7 +43,7 @@ export default function SkillPhases() {
       else status = "🔒 Locked";
       return { phase, index, unlocked, mockDone, contentDone, status };
     });
-  }, [level, progress]);
+  }, [level, progress, storageProgress]);
 
   const unlockedCount = phases.filter(p => p.unlocked).length;
   const justUnlocked = unlockedCount > prevUnlockedRef.current;

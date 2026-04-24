@@ -184,4 +184,176 @@ router.post("/progress/:studentId/activity", async (req, res) => {
   }
 });
 
+// POST /api/progress/complete-phase - Complete a phase and unlock next phase
+router.post("/progress/complete-phase", async (req, res) => {
+  try {
+    const { userId, skillId, level, phaseNumber, score, passed } = req.body;
+
+    if (!userId || !skillId || !level || phaseNumber === undefined || score === undefined || passed === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (!process.env.DATABASE_URL) {
+      // Dev mode: store in memory
+      ensureDevSeedData();
+      
+      // Update or insert phase completion
+      const existingIndex = devStore.userProgress.findIndex(
+        p => p.userId === userId && p.skillId === skillId && p.level === level && p.phaseNumber === phaseNumber
+      );
+      
+      if (existingIndex >= 0) {
+        devStore.userProgress[existingIndex] = {
+          ...devStore.userProgress[existingIndex],
+          status: 'completed',
+          score: score,
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        };
+      } else {
+        devStore.userProgress.push({
+          id: randomUUID(),
+          userId,
+          skillId,
+          level,
+          phaseNumber,
+          status: 'completed',
+          score: score,
+          completedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+
+      // Unlock next phase if passed
+      if (passed) {
+        const nextPhaseIndex = devStore.userProgress.findIndex(
+          p => p.userId === userId && p.skillId === skillId && p.level === level && p.phaseNumber === phaseNumber + 1
+        );
+        
+        if (nextPhaseIndex >= 0) {
+          devStore.userProgress[nextPhaseIndex] = {
+            ...devStore.userProgress[nextPhaseIndex],
+            status: 'unlocked',
+            updatedAt: new Date(),
+          };
+        } else {
+          devStore.userProgress.push({
+            id: randomUUID(),
+            userId,
+            skillId,
+            level,
+            phaseNumber: phaseNumber + 1,
+            status: 'unlocked',
+            score: 0,
+            completedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
+      }
+
+      return res.json({ success: true, message: "Phase completed and next phase unlocked" });
+    }
+
+    // Production mode: use database
+    const { db, skillProgressTable } = await import("@workspace/db");
+    const { eq, and } = await import("drizzle-orm");
+
+    // Update or insert phase completion
+    const existing = await db.select().from(skillProgressTable)
+      .where(and(
+        eq(skillProgressTable.userId, userId),
+        eq(skillProgressTable.skillId, skillId),
+        eq(skillProgressTable.level, level),
+        eq(skillProgressTable.phaseNumber, phaseNumber)
+      )).limit(1);
+
+    if (existing.length > 0) {
+      await db.update(skillProgressTable).set({
+        status: 'completed',
+        score: score,
+        completedAt: new Date(),
+      }).where(eq(skillProgressTable.id, existing[0].id));
+    } else {
+      await db.insert(skillProgressTable).values({
+        id: randomUUID(),
+        userId,
+        skillId,
+        level,
+        phaseNumber,
+        status: 'completed',
+        score: score,
+        completedAt: new Date(),
+      });
+    }
+
+    // Unlock next phase if passed
+    if (passed) {
+      const nextPhase = await db.select().from(skillProgressTable)
+        .where(and(
+          eq(skillProgressTable.userId, userId),
+          eq(skillProgressTable.skillId, skillId),
+          eq(skillProgressTable.level, level),
+          eq(skillProgressTable.phaseNumber, phaseNumber + 1)
+        )).limit(1);
+
+      if (nextPhase.length > 0) {
+        await db.update(skillProgressTable).set({
+          status: 'unlocked',
+        }).where(eq(skillProgressTable.id, nextPhase[0].id));
+      } else {
+        await db.insert(skillProgressTable).values({
+          id: randomUUID(),
+          userId,
+          skillId,
+          level,
+          phaseNumber: phaseNumber + 1,
+          status: 'unlocked',
+          score: 0,
+          completedAt: null,
+        });
+      }
+    }
+
+    return res.json({ success: true, message: "Phase completed and next phase unlocked" });
+  } catch (err) {
+    console.error("Complete phase error:", err);
+    return res.status(500).json({ error: "Failed to complete phase" });
+  }
+});
+
+// GET /api/progress/:userId/:skillId/:level - Get progress for a specific skill and level
+router.get("/progress/:userId/:skillId/:level", async (req, res) => {
+  try {
+    const { userId, skillId, level } = req.params;
+
+    if (!process.env.DATABASE_URL) {
+      // Dev mode: read from memory
+      ensureDevSeedData();
+      const progress = devStore.userProgress.filter(
+        p => p.userId === userId && p.skillId === skillId && p.level === level
+      );
+      
+      return res.json({ progress });
+    }
+
+    // Production mode: use database
+    const { db, skillProgressTable } = await import("@workspace/db");
+    const { eq, and } = await import("drizzle-orm");
+
+    const progress = await db.select().from(skillProgressTable)
+      .where(and(
+        eq(skillProgressTable.userId, userId),
+        eq(skillProgressTable.skillId, skillId),
+        eq(skillProgressTable.level, level)
+      ));
+
+    return res.json({ progress });
+  } catch (err) {
+    console.error("Get progress error:", err);
+    return res.status(500).json({ error: "Failed to get progress" });
+  }
+});
+
 export default router;

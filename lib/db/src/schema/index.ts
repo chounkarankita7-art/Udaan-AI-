@@ -4,3 +4,4 @@ export * from "./courses";
 export * from "./progress";
 export * from "./roadmaps";
 export * from "./certificates";
+export * from "./skill-progress";
