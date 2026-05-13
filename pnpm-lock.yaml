@@ -75,6 +75,9 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^18
+        version: 18.19.130
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
